@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-l2jg&z4haa)ca&v14!k&m4g*-_!0o9j2629o1k8qtc=l6+ea!g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*","localhost","localhost:5432","0.0.0.0:8000","13.233.211.102","13.233.211.102:8000"]
 
 
 # Application definition
@@ -76,17 +76,28 @@ WSGI_APPLICATION = 'medicalrecord.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'db_gyaagl_vocabuli_medicify',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'db_gyaagl_vocabuli_medicify',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'USER': 'postgres',
+        'PASSWORD': 'Medicify@2024',
+        'HOST': '13.233.211.102',
+        'PORT': '5432',
     }
 }
 
