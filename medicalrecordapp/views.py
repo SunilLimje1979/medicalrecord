@@ -841,10 +841,10 @@ def insert_consultation(request):
     debug = ""
     res = {'message_code': 999, 'message_text': 'Functional part is commented.', 'message_data': [], 'message_debug': debug}
      
-    patient_id = request.data.get('Patient_Id', '')
-    doctor_id = request.data.get('Doctor_Id', '')
-    patient_status = request.data.get('Patient_Status', '')
-    consultation_datetime = request.data.get('Consultation_DateTime', '')
+    patient_id = request.data.get('Patient_Id')
+    doctor_id = request.data.get('Doctor_Id')
+    patient_status = request.data.get('Patient_Status')
+    consultation_datetime = request.data.get('Consultation_DateTime')
     consultation_mode = request.data.get('Consultation_Mode', 1)
     visit_reason = request.data.get('Visit_Reason', '')
     consultation_duration = request.data.get('Consultation_Duration', 0)
@@ -862,11 +862,12 @@ def insert_consultation(request):
     elif not consultation_datetime:
         res = {'message_code': 999, 'message_text': 'Consultation date time is required.'}
     else:
+        # print(doctor_id)
         try:
             
             consultation = Tblconsultations.objects.create(
-                doctor_id=doctor_id,
-                patient_id=patient_id,
+                doctor_id_id=doctor_id,
+                patient_id_id=patient_id,
                 patient_status=patient_status,
                 consultation_datetime=consultation_datetime,
                 consultation_mode=consultation_mode,
