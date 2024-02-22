@@ -1073,5 +1073,73 @@ def insert_consultations_biometrics_vitals(request):
 
     return Response(res, status=status.HTTP_200_OK)
 
-    
+
+@api_view(["POST"])
+def get_patientvitals_by_biometric_id(request):
+        debug = []
+        response_data = {
+            'message_code': 999,
+            'message_text': 'Functional part is commented.',
+            'message_data': [],
+            'message_debug': debug
+        }
+        patient_biometric_id = request.data.get('patient_biometric_id', None)
+
+        if not patient_biometric_id:
+            response_data={'message_code': 999, 'message_text': 'patient biometric Id is required.'}
+        
+        else:
+            try:
+                # Get the patient complaint instance
+                patientvital = Tblpatientvitals.objects.get(patient_biometricid=patient_biometric_id)
+                serializer = TblPatientVitalsSerializer(patientvital)
+                result = serializer.data
+                    
+                response_data = {
+                        'message_code': 1000,
+                        'message_text': 'Appointment details are fetched successfully',
+                        'message_data': result,
+                        'message_debug': debug
+                    }
+
+            except Tblpatientvitals.DoesNotExist:
+                response_data = {'message_code': 999, 'message_text': 'Patient vitals not found.','message_debug': debug}
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_labinvestigationreport_by_id(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    lab_investigation_id = request.data.get('lab_investigation_id',None)
+
+    if lab_investigation_id is not None:
+        try:
+            lab_investigation = TblpatientLabinvestigations.objects.get(patient_labinvestigation_id=lab_investigation_id)
+            serializer = LabInvestigationSerializer(lab_investigation)
+            result = serializer.data
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Lab investigation details fetched successfully',
+                'message_data': result,
+                'message_debug': debug
+            }
+
+        except TblpatientLabinvestigations.DoesNotExist:
+            response_data = {'message_code': 404, 'message_text': 'Lab investigation not found', 'message_debug': debug}
+
+    else:
+        response_data = {'message_code': 400, 'message_text': 'Lab investigation id is required', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
 # end

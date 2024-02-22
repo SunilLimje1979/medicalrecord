@@ -6,6 +6,7 @@ urlpatterns = [
     ######################### Patient Vitals  ############################  
     path("insert_patients_vitals/",insert_patients_vitals),
     path("delete_patients_vitals/",delete_patient_vitals),
+    path('get_patientvitals_by_biometric_id/',get_patientvitals_by_biometric_id),
     
     ######################### Patient Prescriptions ############################  
     path("insert_prescriptions/",insert_prescriptions),
@@ -27,6 +28,7 @@ urlpatterns = [
     ######################### Patient lab investigations  ############################  
     path("insert_patient_labinvestigations/",insert_patient_labinvestigations),
     path("delete_patient_labinvestigations/",delete_patient_labinvestigations),
+    path("get_labinvestigationreport_by_id/",get_labinvestigationreport_by_id),
 
     ######################### Biometric ############################
      path("insert_biometric",insert_biometric,name='insert_biometric'),
@@ -38,5 +40,6 @@ urlpatterns = [
      path("delete_consultation",delete_consultation,name='delete_consultation'),
      path("insert_consultations_biometrics_vitals",insert_consultations_biometrics_vitals,name='insert_consultations_biometrics_vitals'),
      
-    
+     
+     
 ]
