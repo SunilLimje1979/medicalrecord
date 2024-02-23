@@ -850,6 +850,9 @@ def insert_consultation(request):
     consultation_duration = request.data.get('Consultation_Duration', 0)
     further_assisted = request.data.get('Further_Assited', 0)
     followup_datetime = request.data.get('Followup_DateTime', 0)
+    instructions = request.data.get('instructions')
+    consultation_fees = request.data.get('consultation_fees')
+    referred_to_doctor = request.data.get('referred_to_doctor')
 
 
     # Validate appointment_id
@@ -876,6 +879,9 @@ def insert_consultation(request):
                 further_assited=further_assisted,
                 followup_datetime=followup_datetime,
                 isdeleted=0,
+                instructions=instructions,
+                consultation_fees=consultation_fees,
+                referred_to_doctor=referred_to_doctor
             )
 
             res = {
@@ -944,6 +950,10 @@ def insert_consultations_biometrics_vitals(request):
     consultation_duration = request.data.get('Consultation_Duration', 0)
     further_assisted = request.data.get('Further_Assited', 0)
     followup_datetime = request.data.get('Followup_DateTime', 0)
+    instructions = request.data.get('instructions')
+    consultation_fees = request.data.get('consultation_fees')
+    referred_to_doctor = request.data.get('referred_to_doctor')
+    further_assited = request.data.get('further_assited')
 
     # tblPatientBiometrics
     operator_id = request.data.get('Operator_Id', 0)
@@ -988,85 +998,94 @@ def insert_consultations_biometrics_vitals(request):
         res = {'message_code': 999, 'message_text': 'Patient ECG is required.'}
     else:
         try:
-                consultation = Tblconsultations.objects.create(
-                    doctor_id=doctor_id,
-                    patient_id=patient_id,
-                    patient_status=patient_status,
-                    consultation_datetime=consultation_datetime,
-                    consultation_mode=consultation_mode,
-                    visit_reason=visit_reason,
-                    consultation_duration=consultation_duration,
-                    further_assited=further_assisted,
-                    followup_datetime=followup_datetime,
-                    isdeleted=0,
-                )
-
-                if consultation.consultation_id:
-                    last_consultation_id=consultation.consultation_id
-                    patientbiometric = Tblpatientbiometrics.objects.create(
-                    patient_id=patient_id,
-                    doctor_id=doctor_id,
-                    consultation_id=last_consultation_id,
-                    operator_id=operator_id,
-                    patient_status=patient_status,
-                    patient_height=patient_height,
-                    patient_weight=patient_weight,
-                    patient_bmi=patient_bmi,
-                    isdeleted=0,
-                    )
-                    if patientbiometric.patient_biometricid:
+           
+            Consultationdata = {
+                'doctor_id': doctor_id,
+                'patient_id': patient_id,
+                'patient_status': patient_status,
+                'consultation_datetime': consultation_datetime,
+                'consultation_mode': consultation_mode,
+                'visit_reason': visit_reason,
+                'consultation_duration': consultation_duration,
+                'further_assisted': further_assisted,
+                'followup_datetime': followup_datetime,
+                'isdeleted': 0,
+                'instructions': instructions,
+                'consultation_fees': consultation_fees,
+                'referred_to_doctor': referred_to_doctor,
+                'further_assited':further_assited
+            }
+            Consultationserializer = ConsultationSerializer(data=Consultationdata)
+            if Consultationserializer.is_valid():
+                instance = Consultationserializer.save()
+                last_consultation_id = instance.consultation_id
+                
+                if(last_consultation_id):
+                    Patientdata = {
+                        'patient_id': patient_id,
+                        'doctor_id': doctor_id,
+                        'consultation_id': last_consultation_id,
+                        'operator_id': operator_id,
+                        'patient_status': patient_status,
+                        'patient_height': patient_height,
+                        'patient_weight': patient_weight,
+                        'patient_bmi': patient_bmi,
+                        'isdeleted': 0
+                    }
+                    PatientBiometrics = PatientBiometricsSerializer(data=Patientdata)
+                    if PatientBiometrics.is_valid():
+                        instance = PatientBiometrics.save()
+                        lastBiometricId = instance.patient_biometricid
                         
-                        lastBiometricId=patientbiometric.patient_biometricid
-                        patientvitals = Tblpatientvitals.objects.create(
-                        patient_id=patient_id,
-                        doctor_id=doctor_id,
-                        consultation_id=last_consultation_id,
-                        operator_id=operator_id,
-                        patient_status=patient_status,
-                        patient_heartratepluse=heart_rate_pulse,
-                        patient_bpsystolic=bp_systolic,
-                        patient_bpdistolic=bp_diastolic,
-                        patient_painscale=pain_scale,
-                        patient_respiratoryrate=respiratory_rate,
-                        patient_temparature=temperature,
-                        patient_chest=chest,
-                        patient_ecg=ecg,
-                        isdeleted=0,
-                        )
-                        if patientvitals.patient_biometricid:
-                            last_vitals_id=patientvitals.patient_biometricid
+                        patientvitalsdata={
+                            'patient_id': patient_id,
+                            'doctor_id': doctor_id,
+                            'consultation_id': last_consultation_id,
+                            'operator_id': operator_id,
+                            'patient_status': patient_status,
+                            'patient_heartratepluse': heart_rate_pulse,
+                            'patient_bpsystolic': bp_systolic,
+                            'patient_bpdistolic': bp_diastolic,
+                            'patient_painscale': pain_scale,
+                            'patient_respiratoryrate': respiratory_rate,
+                            'patient_temparature': temperature,
+                            'patient_chest': chest,
+                            'patient_ecg': ecg,
+                            'isdeleted': 0
+                        }
+                        patientvitals = TblPatientVitalsSerializer(data=patientvitalsdata)
+                        if patientvitals.is_valid():
+                            instance = patientvitals.save()
+                            lastpatient_biometricid = instance.patient_biometricid
                             res = {
-                                    'message_code': 1000,
-                                    'message_text': 'Patient consultations, biometrics, vitals inserted successfully.',
-                                    'message_data': [{
+                                'message_code': 1000,
+                                'message_text': 'Success',
+                                'message_data': [{
                                           'Consultation_Id': last_consultation_id,
                                           'Patient_Biometricid': lastBiometricId,
-                                          'vitals_id': last_vitals_id}],
-                                    'message_debug': [{"Debug": debug}] if debug != "" else []
-                                }
+                                          'vitals_id': lastpatient_biometricid}],
+                                'message_debug': debug if debug else []
+                            }
                         else:
                             res = {
-                                'message_code': 999,
-                                'message_text': 'Unable to insert patient vitals information.',
-                                'message_data': [],
-                                'message_debug': []  # Empty debug array as in your PHP code
-                            }   
- 
+                                'message_code': 2000,
+                                'message_text': 'Validation Error',
+                                'message_errors': patientvitals.errors
+                            }                 
+                         
+
                     else:
                         res = {
-                                'message_code': 999,
-                                'message_text': 'Unable to insert patient biometric information.',
-                                'message_data': [],
-                                'message_debug': []  # Empty debug array as in your PHP code
-                            }   
-
-                else:
+                            'message_code': 2000,
+                            'message_text': 'Validation Error',
+                            'message_errors': PatientBiometrics.errors
+                        }
+            else:
                     res = {
-                            'message_code': 999,
-                            'message_text': 'Unable to insert consultation information.',
-                            'message_data': [],
-                            'message_debug': []  # Empty debug array as in your PHP code
-                        }   
+                        'message_code': 2000,
+                        'message_text': 'Validation Error',
+                        'message_errors': Consultationserializer.errors
+                    }
 
         except Exception as e:
             res = {'message_code': 999, 'message_text': f'Error: {str(e)}'}
