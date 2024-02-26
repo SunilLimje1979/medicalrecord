@@ -62,6 +62,7 @@ def insert_patients_vitals(request):
         patient_temperature = body.get('patient_temperature', '')
         patient_chest = body.get('patient_chest', '')
         patient_ecg = body.get('patient_ecg', '')
+        weight = body.get('weight', '')
         try:
             # Validate if the patient exists
             if not Tblpatients.objects.filter(patient_id=body.get('patient_id'), isdeleted=0).exists():
@@ -80,7 +81,8 @@ def insert_patients_vitals(request):
                             patient_temparature=patient_temperature,
                             patient_chest=patient_chest,
                             patient_ecg=patient_ecg,
-                            isdeleted=0
+                            isdeleted=0,
+                            weight=weight
                         )
 
                         # Save the new instance
@@ -970,6 +972,7 @@ def insert_consultations_biometrics_vitals(request):
     temperature = request.data.get('Patient_Temparature', '')
     chest = request.data.get('Patient_Chest', '')
     ecg = request.data.get('Patient_ECG', '')
+    weight = request.data.get('weight', '')
 
     # All validations and separate message for each failed condition
     if not doctor_id:
@@ -1051,7 +1054,8 @@ def insert_consultations_biometrics_vitals(request):
                             'patient_temparature': temperature,
                             'patient_chest': chest,
                             'patient_ecg': ecg,
-                            'isdeleted': 0
+                            'isdeleted': 0,
+                            'weight':weight
                         }
                         patientvitals = TblPatientVitalsSerializer(data=patientvitalsdata)
                         if patientvitals.is_valid():
