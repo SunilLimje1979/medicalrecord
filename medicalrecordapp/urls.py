@@ -12,6 +12,7 @@ urlpatterns = [
     path("insert_prescriptions/",insert_prescriptions),
     path("delete_prescriptions/",delete_prescriptions),
 
+
     
     ######################### Patient Medication  ############################  
     path("insert_patient_medications/",insert_patient_medications),
