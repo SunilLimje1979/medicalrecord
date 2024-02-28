@@ -68,32 +68,70 @@ def insert_patients_vitals(request):
             if not Tblpatients.objects.filter(patient_id=body.get('patient_id'), isdeleted=0).exists():
                  response_data=({'message': 'Patient not found.'})
             else:
-                new_vitals = Tblpatientvitals(
-                            patient_id=patient_id,
-                            doctor_id=doctor_id,
-                            operator_id=operator_id,
-                            patient_status=patient_status,
-                            patient_heartratepluse=patient_heart_rate,
-                            patient_bpsystolic=patient_bp_systolic,
-                            patient_bpdistolic=patient_bp_diastolic,
-                            patient_painscale=patient_pain_scale,
-                            patient_respiratoryrate=patient_respiratory_rate,
-                            patient_temparature=patient_temperature,
-                            patient_chest=patient_chest,
-                            patient_ecg=patient_ecg,
-                            isdeleted=0,
-                            weight=weight
-                        )
+                # new_vitals = Tblpatientvitals(
+                #             patient_id=patient_id,
+                #             doctor_id=doctor_id,
+                #             operator_id=operator_id,
+                #             patient_status=patient_status,
+                #             patient_heartratepluse=patient_heart_rate,
+                #             patient_bpsystolic=patient_bp_systolic,
+                #             patient_bpdistolic=patient_bp_diastolic,
+                #             patient_painscale=patient_pain_scale,
+                #             patient_respiratoryrate=patient_respiratory_rate,
+                #             patient_temparature=patient_temperature,
+                #             patient_chest=patient_chest,
+                #             patient_ecg=patient_ecg,
+                #             isdeleted=0,
+                #             weight=weight
+                #         )
 
-                        # Save the new instance
-                new_vitals.save()
+                #         # Save the new instance
+                # new_vitals.save()
 
-                response_data = {
-                            'message_code': 1000,
-                            'message_text': 'Vitals patient inserted successfully.',
-                            'message_data': [{'Patient_Biometricid': new_vitals.patient_biometricid}],
-                            'message_debug': debug
-                        }
+                # response_data = {
+                #             'message_code': 1000,
+                #             'message_text': 'Vitals patient inserted successfully.',
+                #             'message_data': [{'Patient_Biometricid': new_vitals.patient_biometricid}],
+                #             'message_debug': debug
+                #         }
+                 
+                
+                new_vitals = {
+                            'patient_id':patient_id,
+                            'doctor_id':doctor_id,
+                            'operator_id':operator_id,
+                            'patient_status':patient_status,
+                            'patient_heartratepluse':patient_heart_rate,
+                            'patient_bpsystolic':patient_bp_systolic,
+                            'patient_bpdistolic':patient_bp_diastolic,
+                            'patient_painscale':patient_pain_scale,
+                            'patient_respiratoryrate':patient_respiratory_rate,
+                            'patient_temparature':patient_temperature,
+                            'patient_chest':patient_chest,
+                            'patient_ecg':patient_ecg,
+                            'isdeleted':0,
+                            'weight':weight
+                            }
+    
+                
+                vitalsSerializer = TblPatientVitalsSerializer(data=new_vitals)
+                if vitalsSerializer.is_valid():
+                    instance = vitalsSerializer.save()
+                    vitals_id = instance.patient_biometricid
+
+                    response_data = {
+                        'message_code': 1000,
+                        'message_text': 'Success',
+                        'message_data': {'vitals_id': str(vitals_id)},
+                        'message_debug': debug if debug else []
+                    }
+                else:
+                    response_data = {
+                        'message_code': 2000,
+                        'message_text': 'Validation Error',
+                        'message_errors': vitalsSerializer.errors
+                    }
+
     
 
         except Exception as e:
