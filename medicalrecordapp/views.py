@@ -878,7 +878,7 @@ def insert_consultation(request):
     instructions = request.data.get('instructions')
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
-
+    referred_by_doctor = request.data.get('referred_to_doctor')
 
     # Validate appointment_id
     if not doctor_id:
@@ -906,7 +906,8 @@ def insert_consultation(request):
                 isdeleted=0,
                 instructions=instructions,
                 consultation_fees=consultation_fees,
-                referred_to_doctor=referred_to_doctor
+                referred_to_doctor=referred_to_doctor,
+                referred_by_doctor = referred_by_doctor
             )
 
             res = {
@@ -979,6 +980,7 @@ def insert_consultations_biometrics_vitals(request):
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
     further_assited = request.data.get('further_assited')
+    referred_by_doctor = request.data.get('referred_to_doctor')
 
     # tblPatientBiometrics
     operator_id = request.data.get('Operator_Id', 0)
@@ -1039,7 +1041,8 @@ def insert_consultations_biometrics_vitals(request):
                 'instructions': instructions,
                 'consultation_fees': consultation_fees,
                 'referred_to_doctor': referred_to_doctor,
-                'further_assited':further_assited
+                'further_assited':further_assited,
+                'referred_by_doctor':referred_by_doctor
             }
             Consultationserializer = ConsultationSerializer(data=Consultationdata)
             if Consultationserializer.is_valid():
@@ -1202,8 +1205,8 @@ def get_labinvestigation_bydoctorid(request):
 
     if doctor_id is not None:
         try:
-            lab_investigation = TblpatientLabinvestigations.objects.get(doctor_id=doctor_id)
-            serializer = LabInvestigationSerializer(lab_investigation)
+            lab_investigation = Tbllabinvestigations.objects.get(doctor_id=doctor_id,isdeleted=0)
+            serializer = TbllabinvestigationsSerializer(lab_investigation)
             result = serializer.data
 
             response_data = {
@@ -1213,7 +1216,7 @@ def get_labinvestigation_bydoctorid(request):
                 'message_debug': debug
             }
 
-        except TblpatientLabinvestigations.DoesNotExist:
+        except Tbllabinvestigations.DoesNotExist:
             response_data = {'message_code': 404, 'message_text': 'Lab investigation not found', 'message_debug': debug}
 
     else:
