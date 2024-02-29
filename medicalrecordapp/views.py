@@ -68,33 +68,7 @@ def insert_patients_vitals(request):
             if not Tblpatients.objects.filter(patient_id=body.get('patient_id'), isdeleted=0).exists():
                  response_data=({'message': 'Patient not found.'})
             else:
-                # new_vitals = Tblpatientvitals(
-                #             patient_id=patient_id,
-                #             doctor_id=doctor_id,
-                #             operator_id=operator_id,
-                #             patient_status=patient_status,
-                #             patient_heartratepluse=patient_heart_rate,
-                #             patient_bpsystolic=patient_bp_systolic,
-                #             patient_bpdistolic=patient_bp_diastolic,
-                #             patient_painscale=patient_pain_scale,
-                #             patient_respiratoryrate=patient_respiratory_rate,
-                #             patient_temparature=patient_temperature,
-                #             patient_chest=patient_chest,
-                #             patient_ecg=patient_ecg,
-                #             isdeleted=0,
-                #             weight=weight
-                #         )
-
-                #         # Save the new instance
-                # new_vitals.save()
-
-                # response_data = {
-                #             'message_code': 1000,
-                #             'message_text': 'Vitals patient inserted successfully.',
-                #             'message_data': [{'Patient_Biometricid': new_vitals.patient_biometricid}],
-                #             'message_debug': debug
-                #         }
-                 
+                
                 
                 new_vitals = {
                             'patient_id':patient_id,
@@ -224,29 +198,35 @@ def insert_prescriptions(request):
                 response_data={'message_code': 999, 'message_text': 'Invalid datetime format.'}
 
             try:
-                # ORM method for insertion
-                prescription = Tblprescriptions(
-                    doctor_id=doctor_id,
-                    patient_id=patient_id,
-                    patient_status=patient_status,
-                    consultation_id=consultation_id,
-                    prescription_datetime=epoch_time,
-                    prescription_details=prescription_details,
-                    isdeleted=0
-                )
+                
+                prescription = {
+                    'doctor_id':doctor_id,
+                    'patient_id':patient_id,
+                    'patient_status':patient_status,
+                    'consultation_id':consultation_id,
+                    'prescription_datetime':epoch_time,
+                    'prescription_details':prescription_details,
+                    'isdeleted':0
+                }
+                prescriptionSerializer = PrescriptionsSerializer(data=prescription)
+                if prescriptionSerializer.is_valid():
+                    instance = prescriptionSerializer.save()
+                    last_insert_id = instance.prescriptions_id
 
-                # Save the new prescription instance
-                prescription.save()
-
-                # Get the last inserted ID
-                last_insert_id = prescription.prescriptions_id
-
-                response_data = {
+                    response_data = {
                     'message_code': 1000,
                     'message_text': 'Prescriptions inserted successfully.',
                     'message_data': [{'Prescriptions_Id': last_insert_id}],
                     'message_debug': debug
                 }
+                else:
+                    response_data = {
+                        'message_code': 2000,
+                        'message_text': 'Validation Error',
+                        'message_errors': prescriptionSerializer.errors
+                    }
+
+               
 
             except Exception as e:
                 response_data = {'message_code': 999, 'message_text': f"Error: {str(e)}"}
@@ -619,35 +599,40 @@ def insert_patient_labinvestigations(request):
                     datetime.strptime(lab_investigation_datetime, "%Y-%m-%d %H:%M:%S").timestamp()
                 )
 
-                # ORM method for insertion
-                lab_investigation = TblpatientLabinvestigations(
-                    doctor_id=doctor_id,
-                    patient_id=patient_id,
-                    patient_status=patient_status,
-                    consultation_id=consultation_id,
-                    prescription_id=prescription_id,
-                    labinvestigation_datetime=lab_investigation_datetime_epoch,
-                    labinvestigation_category=lab_investigation_category,
-                    patient_labtestid=patient_labtest_id,
-                    patient_labtestreport=patient_labtest_report,
-                    patient_labtestsample=patient_labtest_sample,
-                    patient_labtestreport_check=patient_labtest_report_check,
-                    lattest_extrafield1=lat_test_extra_field1,
-                    isdeleted=0
-                )
+                lab_investigation = {
+                    'doctor_id':doctor_id,
+                    'patient_id':patient_id,
+                    'patient_status':patient_status,
+                    'consultation_id':consultation_id,
+                    'prescription_id':prescription_id,
+                    'labinvestigation_datetime':lab_investigation_datetime_epoch,
+                    'labinvestigation_category':lab_investigation_category,
+                    'patient_labtestid':patient_labtest_id,
+                    'patient_labtestreport':patient_labtest_report,
+                    'patient_labtestsample':patient_labtest_sample,
+                    'patient_labtestreport_check':patient_labtest_report_check,
+                    'lattest_extrafield1':lat_test_extra_field1,
+                    'isdeleted':0
+                }
+                lab_investigationSerializer = LabInvestigationSerializer(data=lab_investigation)
+                if lab_investigationSerializer.is_valid():
+                    instance = lab_investigationSerializer.save()
+                    last_insert_id = instance.patient_labinvestigation_id
 
-                # Save the new lab_investigation instance
-                lab_investigation.save()
-
-                # Get the last inserted ID
-                last_insert_id = lab_investigation.patient_labinvestigation_id
-
-                response_data = {
+                    response_data = {
                     'message_code': 1000,
                     'message_text': 'Patient lab investigations inserted successfully.',
                     'message_data': [{'Patient_LabInvestigation_Id': last_insert_id}],
                     'message_debug': debug
                 }
+                else:
+                    response_data = {
+                        'message_code': 2000,
+                        'message_text': 'Validation Error',
+                        'message_errors': lab_investigationSerializer.errors
+                    }
+
+               
 
             except Exception as e:
                 response_data = {'message_code': 999, 'message_text': f"Error: {str(e)}"}
@@ -1199,6 +1184,40 @@ def get_labinvestigationreport_by_id(request):
 
     else:
         response_data = {'message_code': 400, 'message_text': 'Lab investigation id is required', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_labinvestigation_bydoctorid(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    doctor_id = request.data.get('doctor_id',None)
+
+    if doctor_id is not None:
+        try:
+            lab_investigation = TblpatientLabinvestigations.objects.get(doctor_id=doctor_id)
+            serializer = LabInvestigationSerializer(lab_investigation)
+            result = serializer.data
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Lab investigation details by doctor id fetched successfully',
+                'message_data': result,
+                'message_debug': debug
+            }
+
+        except TblpatientLabinvestigations.DoesNotExist:
+            response_data = {'message_code': 404, 'message_text': 'Lab investigation not found', 'message_debug': debug}
+
+    else:
+        response_data = {'message_code': 400, 'message_text': 'Doctor id is required', 'message_debug': debug}
 
     return Response(response_data, status=status.HTTP_200_OK)
 

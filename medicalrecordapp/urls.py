@@ -30,6 +30,7 @@ urlpatterns = [
     path("insert_patient_labinvestigations/",insert_patient_labinvestigations),
     path("delete_patient_labinvestigations/",delete_patient_labinvestigations),
     path("get_labinvestigationreport_by_id/",get_labinvestigationreport_by_id),
+    path("get_labinvestigation_bydoctorid/",get_labinvestigation_bydoctorid),
 
     ######################### Biometric ############################
      path("insert_biometric",insert_biometric,name='insert_biometric'),
