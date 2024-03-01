@@ -1141,7 +1141,7 @@ def get_patientvitals_by_biometric_id(request):
             try:
                 # Get the patient complaint instance
                 patientvital = Tblpatientvitals.objects.get(patient_biometricid=patient_biometric_id)
-                serializer = TblPatientVitalsSerializer(patientvital)
+                serializer = TblPatientVitalsSerializer(patientvital, many=True)
                 result = serializer.data
                     
                 response_data = {
@@ -1172,7 +1172,7 @@ def get_labinvestigationreport_by_id(request):
     if lab_investigation_id is not None:
         try:
             lab_investigation = TblpatientLabinvestigations.objects.get(patient_labinvestigation_id=lab_investigation_id)
-            serializer = LabInvestigationSerializer(lab_investigation)
+            serializer = LabInvestigationSerializer(lab_investigation, many=True)
             result = serializer.data
 
             response_data = {
@@ -1205,8 +1205,8 @@ def get_labinvestigation_bydoctorid(request):
 
     if doctor_id is not None:
         try:
-            lab_investigation = Tbllabinvestigations.objects.get(doctor_id=doctor_id,isdeleted=0)
-            serializer = TbllabinvestigationsSerializer(lab_investigation)
+            lab_investigation = Tbllabinvestigations.objects.filter(doctor_id=doctor_id,isdeleted=0)
+            serializer = TbllabinvestigationsSerializer(lab_investigation, many=True)
             result = serializer.data
 
             response_data = {
