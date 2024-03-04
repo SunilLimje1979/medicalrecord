@@ -1140,7 +1140,7 @@ def get_patientvitals_by_biometric_id(request):
         else:
             try:
                 # Get the patient complaint instance
-                patientvital = Tblpatientvitals.objects.get(patient_biometricid=patient_biometric_id)
+                patientvital = Tblpatientvitals.objects.filter(patient_biometricid=patient_biometric_id)
                 serializer = TblPatientVitalsSerializer(patientvital, many=True)
                 result = serializer.data
                     
