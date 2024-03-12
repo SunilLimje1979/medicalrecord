@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.urls import path
 from .views import *
 
+from .views_pdf import * 
+
 urlpatterns = [
     ######################### Patient Vitals  ############################  
     path("insert_patients_vitals/",insert_patients_vitals),
@@ -42,6 +44,9 @@ urlpatterns = [
      path("delete_consultation",delete_consultation,name='delete_consultation'),
      path("insert_consultations_biometrics_vitals",insert_consultations_biometrics_vitals,name='insert_consultations_biometrics_vitals'),
      
-     
+     ##################################pdfs###############################
+     path('build_pdf/', PdfCreator.as_view(), name='build_pdf'),
+     path('generateprescriptionpdf/', fi_generateprescriptionpdf, name='fi_generateprescriptionpdf'),
+     path('generateclinicpdf/', fi_generateclinicpdf, name='fi_generateclinicpdf'),
      
 ]
