@@ -879,6 +879,8 @@ def insert_consultation(request):
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
     referred_by_doctor = request.data.get('referred_to_doctor')
+    appointment_id = request.data.get('appointment_id',"")
+
 
     # Validate appointment_id
     if not doctor_id:
@@ -907,9 +909,29 @@ def insert_consultation(request):
                 instructions=instructions,
                 consultation_fees=consultation_fees,
                 referred_to_doctor=referred_to_doctor,
-                referred_by_doctor = referred_by_doctor
+                referred_by_doctor = referred_by_doctor,
+                appointment_id=appointment_id
             )
+            data = {}
+            consultation_id = consultation.consultation_id
+            data['consultation_id'] = consultation_id
 
+            if consultation_id:
+                appointment = Tbldoctorappointments.objects.filter(appointment_id=appointment_id)
+                serializer = TbldoctorappointmentsSerializer(appointment, many=True)
+                result = serializer.data
+
+                if result:  # Check if the result list is not empty
+                    appointment_id = result[0]['appointment_id']
+
+                    if appointment_id:
+                        appointment_queryset = Tbldoctorappointments.objects.get(appointment_id=appointment_id)
+                        serializer = TbldoctorappointmentsSerializer(appointment_queryset, data=data, partial=True)
+                        if serializer.is_valid():
+                            updated_data = serializer.validated_data  # Get the validated data after a successful update
+                            serializer.save()
+                            
+            
             res = {
                 'message_code': 1000,
                 'message_text': 'Consultation insert successfully',
@@ -981,6 +1003,7 @@ def insert_consultations_biometrics_vitals(request):
     referred_to_doctor = request.data.get('referred_to_doctor')
     further_assited = request.data.get('further_assited')
     referred_by_doctor = request.data.get('referred_to_doctor')
+    appointment_id = request.data.get('appointment_id',"")
 
     # tblPatientBiometrics
     operator_id = request.data.get('Operator_Id', 0)
@@ -1042,7 +1065,8 @@ def insert_consultations_biometrics_vitals(request):
                 'consultation_fees': consultation_fees,
                 'referred_to_doctor': referred_to_doctor,
                 'further_assited':further_assited,
-                'referred_by_doctor':referred_by_doctor
+                'referred_by_doctor':referred_by_doctor,
+                'appointment_id':appointment_id
             }
             Consultationserializer = ConsultationSerializer(data=Consultationdata)
             if Consultationserializer.is_valid():
@@ -1050,6 +1074,26 @@ def insert_consultations_biometrics_vitals(request):
                 last_consultation_id = instance.consultation_id
                 
                 if(last_consultation_id):
+
+                    data = {}
+                    consultation_id = last_consultation_id
+                    data['consultation_id'] = consultation_id
+
+                    if consultation_id:
+                        appointment = Tbldoctorappointments.objects.filter(appointment_id=appointment_id)
+                        serializer = TbldoctorappointmentsSerializer(appointment, many=True)
+                        result = serializer.data
+
+                        if result:  # Check if the result list is not empty
+                            appointment_id = result[0]['appointment_id']
+
+                            if appointment_id:
+                                appointment_queryset = Tbldoctorappointments.objects.get(appointment_id=appointment_id)
+                                serializer = TbldoctorappointmentsSerializer(appointment_queryset, data=data, partial=True)
+                                if serializer.is_valid():
+                                    updated_data = serializer.validated_data  # Get the validated data after a successful update
+                                    serializer.save()
+
                     Patientdata = {
                         'patient_id': patient_id,
                         'doctor_id': doctor_id,
@@ -1223,6 +1267,42 @@ def get_labinvestigation_bydoctorid(request):
         response_data = {'message_code': 400, 'message_text': 'Doctor id is required', 'message_debug': debug}
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+@api_view(["POST"])
+def get_consultation_byconsultationid(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id',None)
+
+    if consultation_id is not None:
+        try:
+            consultation_queryset = Tblconsultations.objects.filter(consultation_id=consultation_id)
+            serializer = ConsultationSerializer(consultation_queryset, many=True)
+            result = serializer.data
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'consultations details fetched successfully',
+                'message_data': result,
+                'message_debug': debug
+            }
+
+        except Tblconsultations.DoesNotExist:
+            response_data = {'message_code': 404, 'message_text': 'Tblconsultations not found', 'message_debug': debug}
+
+    else:
+        response_data = {'message_code': 400, 'message_text': 'consultation id is required', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
 
 
 # end

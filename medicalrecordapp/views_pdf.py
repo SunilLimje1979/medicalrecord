@@ -117,6 +117,7 @@ def fi_generateprescriptionpdf(request):
     patient_biometric_id = request.data.get('patient_biometric_id', None)
     Doctor_Location_Availability_Id = request.data.get('Doctor_Location_Availability_Id', None)
     doctor_medicine_id = request.data.get('doctor_medicine_id', None)
+    consultation_id = request.data.get('consultation_id', None)
     
     if not doctor_id:
         res = {'message_code': 999, 'message_text': 'Doctor ID is required.'}
@@ -130,6 +131,8 @@ def fi_generateprescriptionpdf(request):
         res = {'message_code': 999, 'message_text': 'Doctor location availability id is required.'}
     elif not doctor_medicine_id:
         res = {'message_code': 999, 'message_text': 'Doctor medicine id is required.'}
+    elif not consultation_id:
+        res = {'message_code': 999, 'message_text': 'consultation id is required.'}
     else:
         try:
             # Fetch doctor data using Django ORM
@@ -218,11 +221,25 @@ def fi_generateprescriptionpdf(request):
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching patient data: {e}")
                 result_doctor_medicines = []
-            print(result_doctor_medicines)
+            # print(result_doctor_medicines)
+                
+            # Fetch get_consultation_byconsultationid data using Django ORM
+            url_doctor_consultation =  'http://13.233.211.102/medicalrecord/api/get_consultation_byconsultationid/' #'http://localhost:8000/medicalrecord/api/get_consultation_byconsultationid/'
+            json_data_consultation = {"consultation_id":consultation_id}
+
+            try:
+                response_consultation = requests.post(url_doctor_consultation, json=json_data_consultation)
+                response_consultation.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+
+                json_data_consultation= response_consultation.json()
+                result_consultation = json_data_consultation.get("message_data", [])
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching patient data: {e}")
+                result_consultation = []
             
-            if result_doctor and result_patient and result_doctor_location and result_patientvitals and result_doctor_location_availability and result_doctor_medicines:
+            if result_doctor and result_patient and result_doctor_location and result_patientvitals and result_doctor_location_availability and result_doctor_medicines and result_consultation:
                 # Generate PDF
-                pdf_buffer = generate_pdf(result_doctor, result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_doctor_medicines)
+                pdf_buffer = generate_pdf(result_doctor, result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_doctor_medicines,result_consultation)
                 
                 pdf_value = pdf_buffer.getvalue()
                 pdf_buffer.close()
@@ -254,7 +271,7 @@ def fi_generateprescriptionpdf(request):
 
 
 
-def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_doctor_medicines):
+def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_doctor_medicines,result_consultation):
     pdf_buffer = BytesIO()
     left_margin = 0
     right_margin = 0
@@ -393,10 +410,21 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     Date = "<font size=10 color=black><b>Date: &nbsp;"+str(formatted_date)+",</b></font>"
     Time = "<font size=10 color=black><b>"+str(formatted_time)+"</b></font>"
     hr_line_white = HRFlowable(width="100%", color=colors.white, thickness=2, spaceBefore=10, spaceAfter=10)
+
+    # opd
+    
+    appointment_id = result_consultation[0].get('appointment_id','')
+    if appointment_id:
+        formatted_appointment_id = (
+            '0' + str(appointment_id) if 1 <= appointment_id <= 9 else str(appointment_id)
+        )
+    current_month = datetime.now().strftime("%m")
+    current_day = datetime.now().strftime("%d")
+    opd_appointment_no = str(current_month)+str(current_day)+str(formatted_appointment_id)
     new_table_data = [
         [Paragraph(Patient, styles['BodyText']), Paragraph(Date, styles['BodyText'])],
         
-        [Paragraph("Opd No:4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  Mob.:"+str(patient_mobileno)+"", styles['BodyText']), Paragraph(Time, styles['BodyText'])],
+        [Paragraph("Opd No:"+opd_appointment_no+" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  Mob.:"+str(patient_mobileno)+"", styles['BodyText']), Paragraph(Time, styles['BodyText'])],
         # Add more rows as needed
         [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;DM", styles['BodyText']), Paragraph("", styles['BodyText'])],
         [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;DM", styles['BodyText']), Paragraph("", styles['BodyText'])],

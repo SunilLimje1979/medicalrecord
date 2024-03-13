@@ -43,7 +43,8 @@ urlpatterns = [
      path("insert_consultation",insert_consultation,name='insert_consultation'),
      path("delete_consultation",delete_consultation,name='delete_consultation'),
      path("insert_consultations_biometrics_vitals",insert_consultations_biometrics_vitals,name='insert_consultations_biometrics_vitals'),
-     
+     path("get_consultation_byconsultationid/",get_consultation_byconsultationid,name='get_consultation_byconsultationid'),
+
      ##################################pdfs###############################
      path('build_pdf/', PdfCreator.as_view(), name='build_pdf'),
      path('generateprescriptionpdf/', fi_generateprescriptionpdf, name='fi_generateprescriptionpdf'),
