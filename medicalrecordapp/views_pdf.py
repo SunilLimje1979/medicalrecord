@@ -541,6 +541,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
 @api_view(['POST'])
 def fi_generateclinicpdf(request):
     print("543")
+    
     debug = ""
     res = {'message_code': 999, 'message_text': 'Functional part is commented.', 'message_data': [], 'message_debug': debug}
     
