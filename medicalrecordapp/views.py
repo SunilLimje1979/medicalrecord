@@ -24,92 +24,28 @@ from medicify_project.serializers import *
 
 ######################### Patient Vitals ###################################
 ###################### INSERT ##################
+
 @api_view(['POST'])
-@transaction.atomic
 def insert_patients_vitals(request):
-    debug = []
     response_data = {
         'message_code': 999,
         'message_text': 'Functional part is commented.',
         'message_data': [],
-        'message_debug': debug
+        'message_debug': []
     }
 
-    body = request.data
+    serializer = TblPatientVitalsSerializer(data=request.data)
 
-    # Validations for required fields
-    required_fields = ['patient_id', 'doctor_id', 'operator_id', 'patient_status', 'patient_heart_rate', 'patient_bp_systolic', 'patient_bp_diastolic', 'patient_pain_scale', 'patient_respiratory_rate', 'patient_temperature', 'patient_chest', 'patient_ecg']
-    missing_fields = [field for field in required_fields if not body.get(field)]
-
-    if missing_fields:
-        response_data['message_code'] = 999
-        response_data['message_text'] = 'Failure'
-        response_data['message_data'] = {f"Missing required fields: {', '.join(missing_fields)}"}
-    
-
-
+    if serializer.is_valid():
+        serializer.save()
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Vitals patient inserted successfully.',
+            'message_data': [{'Patient_Biometricid': serializer.data['patient_biometricid']}],
+            'message_debug': []
+        }
     else:
-        # Extracting values from the request body
-        patient_id = body.get('patient_id', '')
-        doctor_id = body.get('doctor_id', '')
-        operator_id = body.get('operator_id', '')
-        patient_status = body.get('patient_status', '')
-        patient_heart_rate = body.get('patient_heart_rate', '')
-        patient_bp_systolic = body.get('patient_bp_systolic', '')
-        patient_bp_diastolic = body.get('patient_bp_diastolic', '')
-        patient_pain_scale = body.get('patient_pain_scale', '')
-        patient_respiratory_rate = body.get('patient_respiratory_rate', '')
-        patient_temperature = body.get('patient_temperature', '')
-        patient_chest = body.get('patient_chest', '')
-        patient_ecg = body.get('patient_ecg', '')
-        weight = body.get('weight', '')
-        try:
-            # Validate if the patient exists
-            if not Tblpatients.objects.filter(patient_id=body.get('patient_id'), isdeleted=0).exists():
-                 response_data=({'message': 'Patient not found.'})
-            else:
-                
-                
-                new_vitals = {
-                            'patient_id':patient_id,
-                            'doctor_id':doctor_id,
-                            'operator_id':operator_id,
-                            'patient_status':patient_status,
-                            'patient_heartratepluse':patient_heart_rate,
-                            'patient_bpsystolic':patient_bp_systolic,
-                            'patient_bpdistolic':patient_bp_diastolic,
-                            'patient_painscale':patient_pain_scale,
-                            'patient_respiratoryrate':patient_respiratory_rate,
-                            'patient_temparature':patient_temperature,
-                            'patient_chest':patient_chest,
-                            'patient_ecg':patient_ecg,
-                            'isdeleted':0,
-                            'weight':weight
-                            }
-    
-                
-                vitalsSerializer = TblPatientVitalsSerializer(data=new_vitals)
-                if vitalsSerializer.is_valid():
-                    instance = vitalsSerializer.save()
-                    vitals_id = instance.patient_biometricid
-
-                    response_data = {
-                        'message_code': 1000,
-                        'message_text': 'Success',
-                        'message_data': {'vitals_id': str(vitals_id)},
-                        'message_debug': debug if debug else []
-                    }
-                else:
-                    response_data = {
-                        'message_code': 2000,
-                        'message_text': 'Validation Error',
-                        'message_errors': vitalsSerializer.errors
-                    }
-
-    
-
-        except Exception as e:
-            response_data = {'message_code': 999, 'message_text': f'Error: {str(e)}'}
+        response_data['message_data'] = serializer.errors
 
     return Response(response_data, status=status.HTTP_200_OK)
 
@@ -278,94 +214,47 @@ def delete_prescriptions(request):
 ###################### INSERT ##################
 @api_view(['POST'])
 def insert_patient_medications(request):
-        debug = []
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    data = request.data
+    # Convert Medication_DateTime to epoch time
+    medication_datetime_str = data.get('medication_datetime', '')
+    try:
+        medication_datetime = datetime.strptime(medication_datetime_str, '%Y-%m-%d %H:%M:%S')
+        data['medication_datetime'] = int(medication_datetime.timestamp())
+    except ValueError:
         response_data = {
             'message_code': 999,
-            'message_text': 'Functional part is commented.',
+            'message_text': 'Invalid datetime format.',
             'message_data': [],
             'message_debug': debug
         }
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
 
-        body = request.data
-        # Validations for all fields
-        required_fields = ['Doctor_Id', 'Patient_Id', 'Patient_Status', 'Consultation_Id', 'Prescription_Id',
-                           'Medication_DateTime', 'Medicine_Id', 'Medicine_Form', 'Medicine_Name', 'Medicine_Duration',
-                           'Medicine_Doses', 'Medicine_Dose_Interval', 'Medicine_Instruction_Id', 'Medicine_Category',
-                           'Medicine_ExtraField1', 'Medicine_ExtraField2']
+    serializer = PatientMedicationsSerializer(data=data)
 
-        missing_fields = [field for field in required_fields if not body.get(field)]
+    if serializer.is_valid():
+        serializer.save()
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Patient medications inserted successfully.',
+            'message_data': [{'Patient_Medication_Id': serializer.data['patient_medication_id']}],
+            'message_debug': debug
+        }
+    else:
+        response_data = {
+            'message_code': 999,
+            'message_text': 'Validation Error',
+            'message_data': serializer.errors
+        }
 
-        if missing_fields:
-            response_data['message_code'] = 999
-            response_data['message_text'] = 'Failure'
-            response_data['message_data'] = {f"Missing required fields: {', '.join(missing_fields)}"}
-
-        # If all validations pass, proceed with insertion
-        else:
-            # Extracting values from the request body
-            patient_id = body.get('Patient_Id', '')
-            doctor_id = body.get('Doctor_Id', '')
-            patient_status = body.get('Patient_Status', '')
-            consultation_id = body.get('Consultation_Id', '')
-            prescription_id = body.get('Prescription_Id', '')
-            medication_datetime_str = body.get('Medication_DateTime', '')
-            medicine_id = body.get('Medicine_Id', '')
-            medicine_form = body.get('Medicine_Form', '')
-            medicine_name = body.get('Medicine_Name', '')
-            medicine_duration = body.get('Medicine_Duration', '')
-            medicine_doses = body.get('Medicine_Doses', '')
-            medicine_dose_interval = body.get('Medicine_Dose_Interval', '')
-            medicine_instruction_id = body.get('Medicine_Instruction_Id', '')
-            medicine_category = body.get('Medicine_Category', '')
-            medicine_extra_field1 = body.get('Medicine_ExtraField1', '')
-            medicine_extra_field2 = body.get('Medicine_ExtraField2', '')
-            try:
-                medication_datetime = datetime.strptime(medication_datetime_str, '%Y-%m-%d %H:%M:%S')
-                medication_datetime_epoch = int(medication_datetime.timestamp())
-
-                # ORM method for insertion
-                medication = TblpatientMedications(
-                    doctor_id=doctor_id,
-                    patient_id=patient_id,
-                    patient_status=patient_status,
-                    consultation_id=consultation_id,
-                    prescription_id=prescription_id,
-                    medication_datetime=medication_datetime_epoch,
-                    medicine_id=medicine_id,
-                    medicine_form=medicine_form,
-                    medicine_name=medicine_name,
-                    medicine_duration=medicine_duration,
-                    medicine_doses=medicine_doses,
-                    medicine_dose_interval=medicine_dose_interval,
-                    medicine_instruction_id=medicine_instruction_id,
-                    medicine_category=medicine_category,
-                    medicine_extrafield1=medicine_extra_field1,
-                    medicine_extrafield2=medicine_extra_field2,
-                    isdeleted=0
-                )
-
-                # Save the new medication instance
-                medication.save()
-
-                # Get the last inserted ID
-                last_insert_id = medication.patient_medication_id
-
-                response_data = {
-                    'message_code': 1000,
-                    'message_text': 'Patient medications inserted successfully.',
-                    'message_data': [{'Patient_Medication_Id': last_insert_id}],
-                    'message_debug': debug
-                }
-
-            except Exception as e:
-                response_data = {
-                    'message_code': 999,
-                    'message_text': f'Unable to insert patient medications. Error: {str(e)}',
-                    'message_data': [],
-                    'message_debug': debug
-                }
-
-        return Response(response_data, status=status.HTTP_200_OK)
+    return Response(response_data, status=status.HTTP_200_OK)
 
 ###################### DELETE ##################
 @api_view(['POST'])
@@ -553,91 +442,134 @@ def delete_patient_complaints(request):
 
 ######################### PATIENT LABINVESTIGATION ###################################
 ###################### INSERT ##################
-@api_view(['POST'])
-def insert_patient_labinvestigations(request):
-        debug = []
-        response_data = {
-            'message_code': 999,
-            'message_text': 'Functional part is commented.',
-            'message_data': [],
-            'message_debug': debug
-        }
+# @api_view(['POST'])
+# def insert_patient_labinvestigations(request):
+#         debug = []
+#         response_data = {
+#             'message_code': 999,
+#             'message_text': 'Functional part is commented.',
+#             'message_data': [],
+#             'message_debug': debug
+#         }
 
-        # Extracting values from the request body
-        body = request.data
+#         # Extracting values from the request body
+#         body = request.data
 
-        # Validate presence of required fields
-        required_fields = ['Doctor_Id', 'Patient_Id', 'Patient_Status', 'Consultation_Id', 'Prescription_Id',
-                'LabInvestigation_DateTime', 'LabInvestigation_Category', 'Patient_LabTestId',
-                'Patient_LabTestReport', 'Patient_LabTestSample', 'Patient_LabTestReport_Check', 'LatTest_ExtraField1']
+#         # Validate presence of required fields
+#         required_fields = ['Doctor_Id', 'Patient_Id', 'Patient_Status', 'Consultation_Id', 'Prescription_Id',
+#                 'LabInvestigation_DateTime', 'LabInvestigation_Category', 'Patient_LabTestId',
+#                 'Patient_LabTestReport', 'Patient_LabTestSample', 'Patient_LabTestReport_Check', 'LatTest_ExtraField1']
 
-        missing_fields = [field for field in required_fields if not body.get(field)]
+#         missing_fields = [field for field in required_fields if not body.get(field)]
 
-        if missing_fields:
-            response_data = {
-                'message_code': 999,
-                'message_text': 'Failure',
-                'message_data': {f"Missing required fields: {', '.join(missing_fields)}"}
-            }
-        else:
-             # Fields taken from user
-            doctor_id = body.get('Doctor_Id', '')
-            patient_id = body.get('Patient_Id', '')
-            patient_status = body.get('Patient_Status', '')
-            consultation_id = body.get('Consultation_Id', '')
-            prescription_id = body.get('Prescription_Id', '')
-            lab_investigation_datetime = body.get('LabInvestigation_DateTime', '')
-            lab_investigation_category = body.get('LabInvestigation_Category', '')
-            patient_labtest_id = body.get('Patient_LabTestId', '')
-            patient_labtest_report = body.get('Patient_LabTestReport', '')
-            patient_labtest_sample = body.get('Patient_LabTestSample', '')
-            patient_labtest_report_check = body.get('Patient_LabTestReport_Check', '')
-            lat_test_extra_field1 = body.get('LatTest_ExtraField1', '')
-            try:
-                # Convert LabInvestigation_DateTime to epoch time
-                lab_investigation_datetime_epoch = int(
-                    datetime.strptime(lab_investigation_datetime, "%Y-%m-%d %H:%M:%S").timestamp()
-                )
+#         if missing_fields:
+#             response_data = {
+#                 'message_code': 999,
+#                 'message_text': 'Failure',
+#                 'message_data': {f"Missing required fields: {', '.join(missing_fields)}"}
+#             }
+#         else:
+#              # Fields taken from user
+#             doctor_id = body.get('Doctor_Id', '')
+#             patient_id = body.get('Patient_Id', '')
+#             patient_status = body.get('Patient_Status', '')
+#             consultation_id = body.get('Consultation_Id', '')
+#             prescription_id = body.get('Prescription_Id', '')
+#             lab_investigation_datetime = body.get('LabInvestigation_DateTime', '')
+#             lab_investigation_category = body.get('LabInvestigation_Category', '')
+#             patient_labtest_id = body.get('Patient_LabTestId', '')
+#             patient_labtest_report = body.get('Patient_LabTestReport', '')
+#             patient_labtest_sample = body.get('Patient_LabTestSample', '')
+#             patient_labtest_report_check = body.get('Patient_LabTestReport_Check', '')
+#             lat_test_extra_field1 = body.get('LatTest_ExtraField1', '')
+#             try:
+#                 # Convert LabInvestigation_DateTime to epoch time
+#                 lab_investigation_datetime_epoch = int(
+#                     datetime.strptime(lab_investigation_datetime, "%Y-%m-%d %H:%M:%S").timestamp()
+#                 )
 
-                lab_investigation = {
-                    'doctor_id':doctor_id,
-                    'patient_id':patient_id,
-                    'patient_status':patient_status,
-                    'consultation_id':consultation_id,
-                    'prescription_id':prescription_id,
-                    'labinvestigation_datetime':lab_investigation_datetime_epoch,
-                    'labinvestigation_category':lab_investigation_category,
-                    'patient_labtestid':patient_labtest_id,
-                    'patient_labtestreport':patient_labtest_report,
-                    'patient_labtestsample':patient_labtest_sample,
-                    'patient_labtestreport_check':patient_labtest_report_check,
-                    'lattest_extrafield1':lat_test_extra_field1,
-                    'isdeleted':0
-                }
-                lab_investigationSerializer = LabInvestigationSerializer(data=lab_investigation)
-                if lab_investigationSerializer.is_valid():
-                    instance = lab_investigationSerializer.save()
-                    last_insert_id = instance.patient_labinvestigation_id
+#                 lab_investigation = {
+#                     'doctor_id':doctor_id,
+#                     'patient_id':patient_id,
+#                     'patient_status':patient_status,
+#                     'consultation_id':consultation_id,
+#                     'prescription_id':prescription_id,
+#                     'labinvestigation_datetime':lab_investigation_datetime_epoch,
+#                     'labinvestigation_category':lab_investigation_category,
+#                     'patient_labtestid':patient_labtest_id,
+#                     'patient_labtestreport':patient_labtest_report,
+#                     'patient_labtestsample':patient_labtest_sample,
+#                     'patient_labtestreport_check':patient_labtest_report_check,
+#                     'lattest_extrafield1':lat_test_extra_field1,
+#                     'isdeleted':0
+#                 }
+#                 lab_investigationSerializer = LabInvestigationSerializer(data=lab_investigation)
+#                 if lab_investigationSerializer.is_valid():
+#                     instance = lab_investigationSerializer.save()
+#                     last_insert_id = instance.patient_labinvestigation_id
 
-                    response_data = {
-                    'message_code': 1000,
-                    'message_text': 'Patient lab investigations inserted successfully.',
-                    'message_data': [{'Patient_LabInvestigation_Id': last_insert_id}],
-                    'message_debug': debug
-                }
-                else:
-                    response_data = {
-                        'message_code': 2000,
-                        'message_text': 'Validation Error',
-                        'message_errors': lab_investigationSerializer.errors
-                    }
+#                     response_data = {
+#                     'message_code': 1000,
+#                     'message_text': 'Patient lab investigations inserted successfully.',
+#                     'message_data': [{'Patient_LabInvestigation_Id': last_insert_id}],
+#                     'message_debug': debug
+#                 }
+#                 else:
+#                     response_data = {
+#                         'message_code': 2000,
+#                         'message_text': 'Validation Error',
+#                         'message_errors': lab_investigationSerializer.errors
+#                     }
 
                
 
-            except Exception as e:
-                response_data = {'message_code': 999, 'message_text': f"Error: {str(e)}"}
+#             except Exception as e:
+#                 response_data = {'message_code': 999, 'message_text': f"Error: {str(e)}"}
 
-        return Response(response_data, status=status.HTTP_200_OK)
+#         return Response(response_data, status=status.HTTP_200_OK)
+@api_view(['POST'])
+def insert_patient_labinvestigations(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    # Extract the labinvestigation_datetime from the request data
+    labinvestigation_datetime_str = request.data.get('labinvestigation_datetime', '')
+
+    # Convert labinvestigation_datetime to epoch time
+    try:
+        labinvestigation_datetime = datetime.strptime(labinvestigation_datetime_str, '%Y-%m-%d %H:%M:%S')
+        epoch_time = int(labinvestigation_datetime.timestamp())
+    except ValueError:
+        response_data = {'message_code': 999, 'message_text': 'Invalid datetime format.'}
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    # Add the converted epoch time back to the request data
+    request.data['labinvestigation_datetime'] = epoch_time
+
+    # Use the serializer with the modified data
+    serializer = LabInvestigationSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Patient lab investigations inserted successfully.',
+            'message_data': [{'Patient_LabInvestigation_Id': serializer.data['patient_labinvestigation_id']}],
+            'message_debug': debug
+        }
+    else:
+        response_data = {
+            'message_code': 999,
+            'message_text': 'Validation Error',
+            'message_data': serializer.errors
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
 
 ###################### DELETE ##################
 @api_view(['POST'])
@@ -869,12 +801,18 @@ def insert_consultation(request):
     patient_id = request.data.get('Patient_Id')
     doctor_id = request.data.get('Doctor_Id')
     patient_status = request.data.get('Patient_Status')
-    consultation_datetime = request.data.get('Consultation_DateTime')
+    consultation_datetime_str = request.data.get('Consultation_DateTime')
+    consultation_datetime_epoch = datetime.strptime(consultation_datetime_str, '%Y-%m-%d %H:%M:%S')
+    consultation_datetime = int(consultation_datetime_epoch.timestamp())
+    print(consultation_datetime)
     consultation_mode = request.data.get('Consultation_Mode', 1)
     visit_reason = request.data.get('Visit_Reason', '')
     consultation_duration = request.data.get('Consultation_Duration', 0)
     further_assisted = request.data.get('Further_Assited', 0)
-    followup_datetime = request.data.get('Followup_DateTime', 0)
+    followup_datetime_str = request.data.get('Followup_DateTime', 0)
+    
+    followup_datetime_epoch = datetime.strptime(followup_datetime_str, '%Y-%m-%d %H:%M:%S')
+    followup_datetime = int(followup_datetime_epoch.timestamp())
     instructions = request.data.get('instructions')
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
@@ -992,12 +930,18 @@ def insert_consultations_biometrics_vitals(request):
     patient_id = request.data.get('Patient_Id', '')
     doctor_id = request.data.get('Doctor_Id', '')
     patient_status = request.data.get('Patient_Status', '')
-    consultation_datetime = request.data.get('Consultation_DateTime', '')
+    consultation_datetime_str = request.data.get('Consultation_DateTime')
+    consultation_datetime_epoch = datetime.strptime(consultation_datetime_str, '%Y-%m-%d %H:%M:%S')
+    consultation_datetime = int(consultation_datetime_epoch.timestamp())
     consultation_mode = request.data.get('Consultation_Mode', 1)
     visit_reason = request.data.get('Visit_Reason', '')
     consultation_duration = request.data.get('Consultation_Duration', 0)
     further_assisted = request.data.get('Further_Assited', 0)
-    followup_datetime = request.data.get('Followup_DateTime', 0)
+    followup_datetime_str = request.data.get('Followup_DateTime', 0)
+    
+    followup_datetime_epoch = datetime.strptime(followup_datetime_str, '%Y-%m-%d %H:%M:%S')
+    
+    followup_datetime = int(followup_datetime_epoch.timestamp())
     instructions = request.data.get('instructions')
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
@@ -1304,5 +1248,121 @@ def get_consultation_byconsultationid(request):
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+def get_patient_medications_byconsultationid(request):
+    debug = ""
+    res = {'message_code': 999, 'message_text': "Failure", 'message_data': {'Functional part is commented.'}, 'message_debug': debug}
 
+    try:
+        if request.method == 'POST':
+            data = request.data
+
+            consultation_id = request.data.get('consultation_id',None)
+            if not consultation_id:
+                return Response({'message_code': 999, 'message_text': 'consultation id is required.'})
+
+            try:
+                # Fetching the existing TbldoctorMedicines instance from the database
+                patient_medications = TblpatientMedications.objects.filter(consultation_id=consultation_id)
+                serializer = MedicationsSerializer(patient_medications, many=True)
+
+                if(serializer):
+                    res = {
+                        'message_code': 1000,
+                        'message_text': 'patient medications retrived successfully.',
+                        'message_data': serializer.data,
+                        'message_debug': debug
+                    }
+                else:
+                    res = {
+                        'message_code': 2000,
+                        'message_text': 'Validation Error',
+                        'message_errors': patient_medications.errors
+                    }
+
+            except TblpatientMedications.DoesNotExist:
+                return Response({
+                    'message_code': 999,
+                    'message_text': f'patient medications with consultation id {consultation_id} not found.',
+                    'message_data': { },
+                    'message_debug': debug if debug else []
+                }, status=status.HTTP_200_OK)
+    except Exception as e:
+        res = {
+            'message_code': 999,
+            'message_text': f'Error in get_patient_medications_byconsultationid. Error: {str(e)}',
+            'message_data': {},
+            'message_debug': debug if debug else []
+        }
+
+    return Response(res, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_patientvitals_by_appointment_id(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': None,
+        'message_debug': debug
+    }
+    appointment_id = request.data.get('appointment_id', None)
+
+    if not appointment_id:
+        response_data = {'message_code': 999, 'message_text': 'Appointment ID is required.'}
+    else:
+        try:
+            # Get the patient vitals instance based on the appointment ID
+            patientvitals = Tblpatientvitals.objects.get(appointment_id=appointment_id)
+            serializer = TblPatientVitalsSerializer(patientvitals)
+            result = serializer.data
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Patient vitals fetched successfully',
+                'message_data': result,
+                'message_debug': debug
+            }
+
+        except Tblpatientvitals.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Patient vitals not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def update_patientvitals_by_appointment_id(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': None,
+        'message_debug': debug
+    }
+    appointment_id = request.data.get('appointment_id', None)
+
+    if not appointment_id:
+        response_data = {'message_code': 999, 'message_text': 'Appointment ID is required.'}
+    else:
+        try:
+            # Get the patient vitals instance based on the appointment ID
+            patientvitals = Tblpatientvitals.objects.get(appointment_id=appointment_id)
+            serializer = TblPatientVitalsSerializer(patientvitals, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                serializer.save()
+                response_data = {
+                    'message_code': 1000,
+                    'message_text': 'Patient vitals updated successfully',
+                    'message_data': serializer.data,
+                    'message_debug': debug
+                }
+            else:
+                response_data = {'message_code': 999, 'message_text': 'Invalid data provided.', 'message_debug': debug}
+
+        except Tblpatientvitals.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Patient vitals not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
 # end

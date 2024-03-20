@@ -19,6 +19,7 @@ urlpatterns = [
     ######################### Patient Medication  ############################  
     path("insert_patient_medications/",insert_patient_medications),
     path("delete_patient_medications/",delete_patient_medications),
+    path("get_patient_medications_byconsultationid/",get_patient_medications_byconsultationid),
     
     ######################### Patient Findings and Symtoms ############################  
     path("insert_patient_findingsandsymtoms/",insert_patient_findingsandsymtoms),
@@ -49,5 +50,8 @@ urlpatterns = [
      path('build_pdf/', PdfCreator.as_view(), name='build_pdf'),
      path('generateprescriptionpdf/', fi_generateprescriptionpdf, name='fi_generateprescriptionpdf'),
      path('generateclinicpdf/', fi_generateclinicpdf, name='fi_generateclinicpdf'),
+
+     path("get_patientvitals_by_appointment_id/",get_patientvitals_by_appointment_id),
+     path("update_patientvitals_by_appointment_id/",update_patientvitals_by_appointment_id)
      
 ]
