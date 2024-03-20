@@ -148,3 +148,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Define the media root and URLs
+MEDIA_ROOT = os.path.join(BASE_DIR, 'clinicpdfs')
+MEDIA_URL = '/clinicpdfs/'
+
+MEDIA_ROOT_2 = os.path.join(BASE_DIR, 'prescriptionpdfs')
+MEDIA_URL_2 = '/prescriptionpdfs/'
+
