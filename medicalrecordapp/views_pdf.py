@@ -37,6 +37,8 @@ from translate import Translator
 import qrcode
 
 from django.db.models import Q
+
+from medicalrecord import settings
 margin = 7
 
 pdfmetrics.registerFont(TTFont('Mangal', './Mangal/Mangal.ttf'))
@@ -232,14 +234,25 @@ def fi_generateprescriptionpdf(request):
                 pdf_value = pdf_buffer.getvalue()
                 pdf_buffer.close()
                 
-                # Save the PDF to a folder using Django's File Storage
-                pdfnm = "prescriptionpdfs/" + str(doctor_id) + str(patient_id) + str(consultation_id)  + ".pdf"
-                file_path = default_storage.save(pdfnm, ContentFile(pdf_value))
+                pdf_filename = f"{doctor_id}{patient_id}{consultation_id}.pdf"
 
+                pdf_path = os.path.join(settings.PDF_ROOT2, pdf_filename)
+                # file_path = default_storage.save(pdf_path, ContentFile(pdf_value))
+                # absolute_file_path = default_storage.path(file_path)
+                # url_path = default_storage.url(file_path)
+                # absolute_file_path = absolute_file_path.replace('\\', '/')
+                # url_path = url_path.replace('\\', '/')
+                # normalized_path = os.path.normpath(absolute_file_path)
+                # final_path = str(normalized_path)
+                file_path = default_storage.save(pdf_path, ContentFile(pdf_value))
+                absolute_file_path = default_storage.path(file_path)
+
+                # Convert the path to a string without hyperlink
+                final_path = str(absolute_file_path.replace('\\', '/'))
                 res = {
                     'message_code': 1000,
                     'message_text': "prescription pdf generated successfully.",
-                    'message_data':  [{'pdf_url': file_path}],
+                    'message_data':  [{'pdf_url': final_path}],
                    'message_debug': [{"Debug": debug}] if debug != "" else []
                 }
             else:
@@ -603,24 +616,20 @@ def fi_generateclinicpdf(request):
                 pdf_buffer = generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_location_availability)
                 pdf_value = pdf_buffer.getvalue()
                 pdf_buffer.close()
+                pdf_filename = f"{doctor_id}{doctor_location_id}.pdf"
 
-                # Save the PDF to a folder using Django's File Storage
-                pdfnm = "clinicpdfs/" + str(doctor_id) + str(doctor_location_id)  + ".pdf"
-                file_path = default_storage.save(pdfnm, ContentFile(pdf_value))
+                pdf_path = os.path.join(settings.PDF_ROOT, pdf_filename)
 
-                # if os.path.exists(file_path):
-                #     # Open the file for reading in binary mode
-                #     with open(file_path, 'rb') as pdf_file:
-                #         # Create a FileResponse and specify the content type
-                #         response = FileResponse(pdf_file, content_type='application/pdf')
-                #         # Set the content disposition to attachment to force download
-                #         response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
-                #         return response
+                file_path = default_storage.save(pdf_path, ContentFile(pdf_value))
+                absolute_file_path = default_storage.path(file_path)
 
+                # Convert the path to a string without hyperlink
+                final_path = str(absolute_file_path.replace('\\', '/'))
+                
                 res = {
                     'message_code': 1000,
                     'message_text': "clinic pdf generated successfully.",
-                    'message_data':  [{'pdf_url': file_path}],
+                    'message_data':  [{'pdf_url': final_path}],
                     'message_debug': [{"Debug": debug}] if debug != "" else []
                 }
             else:

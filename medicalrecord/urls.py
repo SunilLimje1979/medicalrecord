@@ -24,5 +24,6 @@ urlpatterns = [
     path("medicalrecord/api/",include("medicalrecordapp.urls")),
 ]+ static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-urlpatterns += static(settings.MEDIA_URL_2, document_root=settings.MEDIA_ROOT_2)
+urlpatterns += static('/clinicpdfs/', document_root=settings.PDF_ROOT)
+urlpatterns += static('/prescriptionpdfs/', document_root=settings.PDF_ROOT2)
+

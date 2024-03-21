@@ -150,10 +150,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Define the media root and URLs
-MEDIA_ROOT = os.path.join(BASE_DIR, 'clinicpdfs')
-MEDIA_URL = '/clinicpdfs/'
-
-MEDIA_ROOT_2 = os.path.join(BASE_DIR, 'prescriptionpdfs')
-MEDIA_URL_2 = '/prescriptionpdfs/'
+# Define the path to the directory containing PDF files
+PDF_ROOT = os.path.join(BASE_DIR, 'staticfiles', 'clinicpdfs')
+PDF_ROOT2 = os.path.join(BASE_DIR, 'staticfiles', 'prescriptionpdfs')
 
