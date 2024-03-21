@@ -249,10 +249,12 @@ def fi_generateprescriptionpdf(request):
 
                 # Convert the path to a string without hyperlink
                 final_path = str(absolute_file_path.replace('\\', '/'))
+                url_prefix = "http://13.233.211.102/medicalrecord/static/"
+                url = final_path.replace("/home/ubuntu/medicalrecord/staticfiles/", url_prefix)
                 res = {
                     'message_code': 1000,
                     'message_text': "prescription pdf generated successfully.",
-                    'message_data':  [{'pdf_url': final_path}],
+                    'message_data':  [{'pdf_url': url}],
                    'message_debug': [{"Debug": debug}] if debug != "" else []
                 }
             else:
@@ -626,10 +628,12 @@ def fi_generateclinicpdf(request):
                 # Convert the path to a string without hyperlink
                 final_path = str(absolute_file_path.replace('\\', '/'))
                 
+                url_prefix = "http://13.233.211.102/medicalrecord/static/"
+                url = final_path.replace("/home/ubuntu/medicalrecord/staticfiles/", url_prefix)
                 res = {
                     'message_code': 1000,
                     'message_text': "clinic pdf generated successfully.",
-                    'message_data':  [{'pdf_url': final_path}],
+                    'message_data':  [{'pdf_url': url}],
                     'message_debug': [{"Debug": debug}] if debug != "" else []
                 }
             else:
