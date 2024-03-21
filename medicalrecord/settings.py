@@ -135,9 +135,9 @@ USE_TZ = True
 
 
 
-STATIC_URL = '/medicalrecord/staticfiles/'
+STATIC_URL = '/medicalrecord/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "medicalrecord/staticfiles"
+    BASE_DIR / "medicalrecord/static"
 ]
 
 # Static files (CSS, JavaScript, Images)
