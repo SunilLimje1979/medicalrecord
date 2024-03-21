@@ -27,3 +27,4 @@ urlpatterns = [
 urlpatterns += static('/clinicpdfs/', document_root=settings.PDF_ROOT)
 urlpatterns += static('/prescriptionpdfs/', document_root=settings.PDF_ROOT2)
 
+
