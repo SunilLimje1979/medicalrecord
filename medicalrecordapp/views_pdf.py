@@ -1,3 +1,4 @@
+import os
 from django.db import connection
 from medicify_project.models import * 
 from medicify_project.serializers import *
@@ -541,7 +542,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
 @api_view(['POST'])
 def fi_generateclinicpdf(request):
     print("543")
-    
+
     debug = ""
     res = {'message_code': 999, 'message_text': 'Functional part is commented.', 'message_data': [], 'message_debug': debug}
     
@@ -606,6 +607,15 @@ def fi_generateclinicpdf(request):
                 # Save the PDF to a folder using Django's File Storage
                 pdfnm = "clinicpdfs/" + str(doctor_id) + str(doctor_location_id)  + ".pdf"
                 file_path = default_storage.save(pdfnm, ContentFile(pdf_value))
+
+                # if os.path.exists(file_path):
+                #     # Open the file for reading in binary mode
+                #     with open(file_path, 'rb') as pdf_file:
+                #         # Create a FileResponse and specify the content type
+                #         response = FileResponse(pdf_file, content_type='application/pdf')
+                #         # Set the content disposition to attachment to force download
+                #         response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                #         return response
 
                 res = {
                     'message_code': 1000,
