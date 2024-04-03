@@ -52,6 +52,14 @@ urlpatterns = [
      path('generateclinicpdf/', fi_generateclinicpdf, name='fi_generateclinicpdf'),
 
      path("get_patientvitals_by_appointment_id/",get_patientvitals_by_appointment_id),
-     path("update_patientvitals_by_appointment_id/",update_patientvitals_by_appointment_id)
+     path("update_patientvitals_by_appointment_id/",update_patientvitals_by_appointment_id),
+
+    path("get_patient_findings_symptoms_by_consultation/",get_patient_findings_symptoms_by_consultation),
+    path("get_patient_labinvestigations_by_consultation_id/",get_patient_labinvestigations_by_consultation_id),
+    path("update_consultation_details/",update_consultation_details),
+    path("update_patient_findings_and_symptoms/",update_patient_findings_and_symptoms),
+    path("get_prescription_details/",get_prescription_details),
+    path("update_consultation_status/",update_consultation_status),
+    path("update_prescription_details/",update_prescription_details),
      
 ]

@@ -818,7 +818,8 @@ def insert_consultation(request):
     referred_to_doctor = request.data.get('referred_to_doctor')
     referred_by_doctor = request.data.get('referred_to_doctor')
     appointment_id = request.data.get('appointment_id',"")
-
+    consultation_status = request.data.get('consultation_status',"")
+    
 
     # Validate appointment_id
     if not doctor_id:
@@ -848,7 +849,8 @@ def insert_consultation(request):
                 consultation_fees=consultation_fees,
                 referred_to_doctor=referred_to_doctor,
                 referred_by_doctor = referred_by_doctor,
-                appointment_id=appointment_id
+                appointment_id=appointment_id,
+                consultation_status=consultation_status
             )
             data = {}
             consultation_id = consultation.consultation_id
@@ -1263,7 +1265,7 @@ def get_patient_medications_byconsultationid(request):
 
             try:
                 # Fetching the existing TbldoctorMedicines instance from the database
-                patient_medications = TblpatientMedications.objects.filter(consultation_id=consultation_id)
+                patient_medications = TblpatientMedications.objects.filter(consultation_id=consultation_id,isdeleted=0)
                 serializer = MedicationsSerializer(patient_medications, many=True)
 
                 if(serializer):
@@ -1364,5 +1366,247 @@ def update_patientvitals_by_appointment_id(request):
         except Tblpatientvitals.DoesNotExist:
             response_data = {'message_code': 999, 'message_text': 'Patient vitals not found.', 'message_debug': debug}
 
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_patient_findings_symptoms_by_consultation(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id', None)
+
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    else:
+        try:
+            findings_symptoms = TblpatientFindingsandsymtoms.objects.filter(consultation_id=consultation_id)
+            serializer = TblpatientFindingsandsymtomsSerializer(findings_symptoms, many=True)
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Patient findings and symptoms fetched successfully.',
+                'message_data': serializer.data,
+                'message_debug': debug
+            }
+        except TblpatientFindingsandsymtoms.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Patient findings and symptoms not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_patient_labinvestigations_by_consultation_id(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id', None)
+
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    else:
+        try:
+            labinvestigations = TblpatientLabinvestigations.objects.filter(consultation_id=consultation_id,isdeleted=0)
+            serializer = LabInvestigationSerializer(labinvestigations, many=True)
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Patient lab investigations details fetched successfully.',
+                'message_data': serializer.data,
+                'message_debug': debug
+            }
+        except TblpatientLabinvestigations.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Patient lab investigations not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_prescription_details(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id', None)
+
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    else:
+        try:
+            prescriptions = Tblprescriptions.objects.filter(consultation_id=consultation_id)
+            serializer = TblPrescriptionsSerializer(prescriptions, many=True)
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Prescription details fetched successfully.',
+                'message_data': serializer.data,
+                'message_debug': debug
+            }
+        except Tblprescriptions.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Prescription details not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def update_prescription_details(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_debug': debug
+    }
+
+    # Extract data from the request
+    consultation_id = request.data.get('consultation_id', None)
+
+    # Check if required data is provided
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    else:
+        try:
+            # Retrieve the prescription instance based on consultation ID
+            prescription = Tblprescriptions.objects.get(consultation_id=consultation_id)
+
+            # Create a serializer instance with the instance and request data
+            serializer = TblPrescriptionsSerializer(prescription, data=request.data)
+
+            # Validate the serializer
+            if serializer.is_valid():
+                # Save the updated instance
+                serializer.save()
+
+                response_data = {
+                    'message_code': 1000,
+                    'message_text': 'Prescription details updated successfully.',
+                    'message_debug': debug
+                }
+            else:
+                response_data['message_text'] = 'Invalid data provided.'
+                response_data['message_debug'] = serializer.errors
+        except Tblprescriptions.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Prescription details not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def update_consultation_status(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id', None)
+    consultation_status = request.data.get('consultation_status', None)
+
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    elif not consultation_status:
+        response_data = {'message_code': 999, 'message_text': 'Consultation status is required.'}
+    else:
+        try:
+            consultation = Tblconsultations.objects.get(consultation_id=consultation_id)
+            consultation.consultation_status = consultation_status
+            consultation.save()
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Consultation status updated successfully.',
+                'message_data': {'consultation_id': consultation_id, 'consultation_status': consultation_status},
+                'message_debug': debug
+            }
+        except Tblconsultations.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Consultation not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def update_consultation_details(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    consultation_id = request.data.get('consultation_id', None)
+
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+    else:
+        try:
+            consultation = Tblconsultations.objects.get(consultation_id=consultation_id)
+            serializer = ConsultationSerializer(consultation, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                response_data = {
+                    'message_code': 1000,
+                    'message_text': 'Consultation details updated successfully.',
+                    'message_data': serializer.data,
+                    'message_debug': debug
+                }
+            else:
+                response_data = {'message_code': 999, 'message_text': 'Invalid data.', 'message_debug': serializer.errors}
+        except Tblconsultations.DoesNotExist:
+            response_data = {'message_code': 999, 'message_text': 'Consultation not found.', 'message_debug': debug}
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def update_patient_findings_and_symptoms(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Functional part is commented.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    # Extract data from the request
+    consultation_id = request.data.get('consultation_id', None)
+
+    # Check if required data is provided
+    if not consultation_id:
+        response_data = {'message_code': 999, 'message_text': 'Consultation ID is required.'}
+        return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Retrieve the patient findings and symptoms instance based on consultation ID
+        patient_findings_symptoms = TblpatientFindingsandsymtoms.objects.get(consultation_id=consultation_id)
+
+        # Create a serializer instance with the instance and request data
+        serializer = TblpatientFindingsandsymtomsSerializer(patient_findings_symptoms, data=request.data)
+
+        # Validate the serializer
+        if serializer.is_valid():
+            # Save the updated instance
+            serializer.save()
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Patient findings and symptoms updated successfully.',
+                'message_debug': debug
+            }
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+    except TblpatientFindingsandsymtoms.DoesNotExist:
+        response_data = {'message_code': 999, 'message_text': 'Patient findings and symptoms not found.', 'message_debug': debug}
+        return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+    
     return Response(response_data, status=status.HTTP_200_OK)
 # end
