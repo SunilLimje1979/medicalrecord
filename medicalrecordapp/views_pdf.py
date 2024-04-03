@@ -393,7 +393,22 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         patient_firstname = first_patient_data.get('patient_firstname',"")
         patient_fateherhusbandname = first_patient_data.get('patient_fateherhusbandname',"")
         patient_lastname = first_patient_data.get('patient_lastname',"")
-        full_name = str(patient_firstname + " " + patient_fateherhusbandname + " " + patient_lastname)
+        # full_name = str(patient_firstname + " " + patient_fateherhusbandname + " " + patient_lastname)
+        full_name = ""
+
+        if patient_firstname:
+            full_name += patient_firstname.strip()  # strip() to remove any leading/trailing whitespace
+
+        if patient_fateherhusbandname:
+            if full_name:
+                full_name += " "  # Add space if first name is not empty
+            full_name += patient_fateherhusbandname.strip()
+
+        if patient_lastname:
+            if full_name:
+                full_name += " "  # Add space if first or father/husband name is not empty
+            full_name += patient_lastname.strip()
+            
         patient_gender = first_patient_data.get('patient_gender',"")
     else:
         first_patient_data = ""
