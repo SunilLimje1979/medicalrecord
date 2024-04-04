@@ -896,8 +896,10 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
         img = Image(qr_code_image, width=400, height=400)
     else:
         img=""
-    
-    flowables.extend([img])  # Wrap the image object in a list and extend
+    if img:
+        flowables.extend([img])  # Wrap the image object in a list and extend
+    else:
+        flowables.extend("")
     
     # 
     abhari = "आभारी आहोत!"
