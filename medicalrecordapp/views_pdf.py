@@ -633,6 +633,8 @@ def fi_generateclinicpdf(request):
                 pdf_buffer = generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_location_availability)
                 pdf_value = pdf_buffer.getvalue()
                 pdf_buffer.close()
+                
+    
                 pdf_filename = f"{doctor_id}{doctor_location_id}.pdf"
 
                 pdf_path = os.path.join(settings.PDF_ROOT, pdf_filename)
@@ -734,7 +736,8 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
         marathi_translation = translate_to_marathi(content_text)
     else:
         marathi_translation=""
-
+    
+    
     if result_doctor:
         first_doctor_data = result_doctor[0]
         doctor_firstname = first_doctor_data.get('doctor_firstname',"")
@@ -776,7 +779,7 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     ])
     table = Table(data, style=table_style)
     flowables = [table]
-
+    
     drtimefont = ParagraphStyle(
         'HindiText',
         parent=styles['BodyText'],
@@ -797,20 +800,21 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     opdtimingmarathi = "दवाखान्यांची वेळ"
     content_style_time = ParagraphStyle(name='Content', fontSize=15, leading=14)
     
-    if result_doctor_location_availability["availability_day"]:
+    if result_doctor_location_availability:
         availability_day = result_doctor_location_availability["availability_day"]
-
+    else:
+        availability_day = ""
+     
     if availability_day == 1:
         daytime= str(result_doctor_location_availability["availability_starttime"])+"-"+str(result_doctor_location_availability["availability_endtime"])
-        
     else:
         daytime=""
-
-    if result_doctor_location_availability["availability_order"]:
+        
+    if result_doctor_location_availability:
         availability_order = result_doctor_location_availability["availability_order"]
     else:
         availability_order=""
-
+    
     # Check the value of 'availability_order'
     if availability_order == 1:
         ordertime = "Morning"
