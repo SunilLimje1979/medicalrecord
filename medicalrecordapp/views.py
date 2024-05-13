@@ -816,7 +816,7 @@ def insert_consultation(request):
     instructions = request.data.get('instructions')
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
-    referred_by_doctor = request.data.get('referred_to_doctor')
+    referred_by_doctor = request.data.get('referred_by_doctor')
     appointment_id = request.data.get('appointment_id',"")
     consultation_status = request.data.get('consultation_status',"")
     
