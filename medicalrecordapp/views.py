@@ -1610,3 +1610,64 @@ def update_patient_findings_and_symptoms(request):
     
     return Response(response_data, status=status.HTTP_200_OK)
 # end
+
+#############new api###################################
+# @api_view(["POST"])
+# def get_consultations_by_patient_id(request):
+#     # Retrieve the patient ID from the request data
+#     patient_id = request.data.get('patient_id', None)
+
+#     # Check if patient ID is provided
+#     if not patient_id:
+#         return Response({'message_code': 999, 'message_text': 'Patient ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#     try:
+#         # Query consultations for the given patient ID
+#         consultations = Tblconsultations.objects.filter(patient_id=patient_id, isdeleted=0)
+#         serializer = ConsultationSerializer(consultations, many=True)
+
+#         # Prepare response data
+#         response_data = {
+#             'message_code': 1000,
+#             'message_text': 'Consultation details fetched successfully.',
+#             'message_data': serializer.data
+#         }
+
+#         return Response(response_data, status=status.HTTP_200_OK)
+
+#     except Tblconsultations.DoesNotExist:
+#         # Handle case when no consultations are found for the given patient ID
+#         return Response({'message_code': 999, 'message_text': 'Consultations not found for the specified patient ID.'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(["POST"])
+def get_consultations_by_patient_id(request):
+    # Retrieve the patient ID from the request data
+    patient_id = request.data.get('patient_id', None)
+
+    # Check if patient ID is provided
+    if not patient_id:
+        return Response({'message_code': 999, 'message_text': 'Patient ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Query consultations for the given patient ID
+        consultations = Tblconsultations.objects.filter(patient_id=patient_id, isdeleted=0)
+
+        if not consultations.exists():
+            # Handle case when no consultations are found for the given patient ID
+            return Response({'message_code': 999, 'message_text': 'Consultations not found for the specified patient ID.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize consultations data
+        serializer = ConsultationSerializer(consultations, many=True)
+
+        # Prepare response data for successful retrieval
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Consultation details fetched successfully.',
+            'message_data': serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Handle other exceptions that may occur during query or serialization
+        return Response({'message_code': 999, 'message_text': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
