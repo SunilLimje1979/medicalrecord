@@ -211,25 +211,32 @@ def fi_generateprescriptionpdf(request):
                 result_doctor_location_availability = []
 
             if consultation_id and doctor_id and patient_id:
-                patient_medications = TblpatientMedications.objects.filter(consultation_id=consultation_id, doctor_id=doctor_id, patient_id=patient_id)
+                patient_medications = TblpatientMedications.objects.filter(consultation_id=consultation_id, doctor_id=doctor_id, patient_id=patient_id,isdeleted=0)
                 serializer = MedicationsSerializer(patient_medications, many=True)
                 result_patient_medications = serializer.data
 
                 # Fetching instruction text
                 for medication_record in result_patient_medications:
-                    medicine_instruction_id = medication_record.get('doctor_id')
+                    medicine_instruction_id = medication_record.get('medicine_instruction_id')
                     if medicine_instruction_id:
-                        medicineInstruction = TblmedicineInstructions.objects.filter(doctor_id=medicine_instruction_id).order_by('doctor_instruction_id').first()
+                        medicineInstruction = TblmedicineInstructions.objects.get(doctor_instruction_id=medicine_instruction_id)
                         serializer_medicine_inst = TblmedicineInstructionsSerializer(medicineInstruction)
+                        # print(serializer_medicine_inst.data)
                         instruction_text = serializer_medicine_inst.data.get('instruction_text', "")
                         medication_record['doctor_instruction_text'] = instruction_text
+                
+                findings_symptoms = TblpatientFindingsandsymtoms.objects.filter(consultation_id=consultation_id)
+                serializer = TblpatientFindingsandsymtomsSerializer(findings_symptoms, many=True)
+                result_findings_symptoms=serializer.data
+                # print(result_findings_symptoms)
             else:
                 result_patient_medications = []
+                result_findings_symptoms=[]
                 # instruction end
 
             if result_consultation:
                 # Generate PDF
-                pdf_buffer = generate_pdf(result_doctor, result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation)
+                pdf_buffer = generate_pdf(result_doctor, result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms)
                 
                 pdf_value = pdf_buffer.getvalue()
                 pdf_buffer.close()
@@ -273,7 +280,7 @@ def fi_generateprescriptionpdf(request):
 
 
 
-def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation):
+def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms):
     
     pdf_buffer = BytesIO()
     left_margin = 0
@@ -418,7 +425,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         full_name = ""
         patient_gender = ""
     
-    if patient_gender==1:
+    if patient_gender==0:
         gender = "Male"
     else:
         gender = "Female"
@@ -454,10 +461,10 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     new_table_data = [
         [Paragraph(Patient, styles['BodyText']), Paragraph(Date, styles['BodyText'])],
         [Paragraph("Opd No:"+opd_appointment_no+" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  Mob.:"+str(patient_mobileno)+"", styles['BodyText']), Paragraph(Time, styles['BodyText'])],
-        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;DM", styles['BodyText']), Paragraph("", styles['BodyText'])],
-        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;DM", styles['BodyText']), Paragraph("", styles['BodyText'])],
-        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;Hypothyroidism", styles['BodyText']), Paragraph("", styles['BodyText'])],
-        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;COAD", styles['BodyText']), Paragraph("", styles['BodyText'])],
+        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+        # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+        # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+        # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
     ]
 
     table_style_second = TableStyle([
@@ -487,6 +494,8 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         patient_temparature = result_patientvitals['patient_temparature']
         patient_chest = result_patientvitals['patient_chest']
         patient_ecg = result_patientvitals['patient_ecg']
+        patient_height=result_patientvitals['height']
+        patient_weight=result_patientvitals['weight']
         bp = str(patient_bpsystolic) +"/"+str(patient_bpdistolic)
     else:
         patient_heartratepluse = ""
@@ -498,24 +507,26 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         patient_chest = ""
         patient_ecg = ""
         bp = ""
+        patient_height=""
+        patient_weight=""
     
-    medicine_str = "<font size=10 color=black><b>RX :- </b></font><br/>"  # Initialize an empty string to store medicine names
-
+    medicine_str = "<font size=10 color=black><b>Rx :- </b></font><br/>"  # Initialize an empty string to store medicine names
+    # print(result_patient_medications)
     for medication in result_patient_medications:
-        medicine_str += str(medication["medicine_name"]) + "<br/>"
-        medicine_str += str(medication["medicine_doses"]) + "<br/>"
-        medicine_str += str(medication["doctor_instruction_text"]) + "<br/><br/>"
+        medicine_str += str(medication["medicine_name"])+" "+ str(medication["medicine_duration"])+"D "+str(medication["medicine_doses"])+" "+str(medication["doctor_instruction_text"])+ "<br/>"
+        # medicine_str += str(medication["medicine_doses"]) + "<br/><br/>"
+        # medicine_str += str(medication["doctor_instruction_text"]) + "<br/><br/>"
     new_table_data_three = [
-        [Paragraph("Wt&nbsp;:&nbsp;&nbsp;&nbsp;80 Kg", styles['BodyText']), Paragraph(OE, styles['BodyText']), Paragraph(medicine_str, styles['BodyText'])],
-        [Paragraph("Ht&nbsp;:&nbsp;&nbsp;&nbsp; 185 Cm", styles['BodyText']), Paragraph("Pulse &nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_heartratepluse)+"/min" , styles['BodyText'])],
-        [Paragraph("Hr&nbsp;:&nbsp;&nbsp;&nbsp;70", styles['BodyText']), Paragraph("Temp&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_temparature)+"", styles['BodyText'])],
-        [Paragraph("Bp&nbsp;:&nbsp;&nbsp;&nbsp;"+str(bp)+"", styles['BodyText']), Paragraph("Pallor &nbsp;:&nbsp;&nbsp;&nbsp; 2", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("Oedema Feet &nbsp;:&nbsp;&nbsp;&nbsp; 2", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("GC &nbsp;:&nbsp;&nbsp;&nbsp; 5", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("RS &nbsp;:&nbsp;&nbsp;&nbsp; Wnl", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("RS Other &nbsp;:&nbsp;&nbsp;&nbsp; RS 0323", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("PA &nbsp;:&nbsp;&nbsp;&nbsp; Soft", styles['BodyText'])],
-        [Paragraph("", styles['BodyText']), Paragraph("PA Other &nbsp;:&nbsp;&nbsp;&nbsp; PA 0323", styles['BodyText'])],
+        [Paragraph("Wt&nbsp;:&nbsp;&nbsp;&nbsp;"+str(patient_weight)+"", styles['BodyText']), Paragraph(OE, styles['BodyText']), Paragraph(medicine_str, styles['BodyText'])],
+        [Paragraph("Ht&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_height)+"", styles['BodyText']), Paragraph("Pulse &nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_heartratepluse)+"/min" , styles['BodyText'])],
+        [Paragraph("Hr&nbsp;:&nbsp;&nbsp;&nbsp;"+str(patient_heartratepluse)+"", styles['BodyText']), Paragraph("Temp&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_temparature)+"", styles['BodyText'])],
+        [Paragraph("Bp&nbsp;:&nbsp;&nbsp;&nbsp;"+str(bp)+"", styles['BodyText']),],
+        [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;", styles['BodyText'])],
+        [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+        # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+        # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+        # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+        # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
     ]
 
     new_table_style = TableStyle([
@@ -534,16 +545,17 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         ('VALIGN', (2, 0), (2, -1), 'TOP'),
         ('SPAN', (2, 0), (2, -1)),
     ])
-    
+    # print(result_consultation)
     new_table_three = Table(new_table_data_three, style=new_table_style, colWidths=[193, 193, 193])
     flowables.extend([new_table_three, hr_line_white])
     Advice =  "<font size=10 color=black><b>Advice :-</b></font>"
 
     new_table_data_four = [
-        [Paragraph(Advice, styles['BodyText']), Paragraph("Hospitalization", styles['BodyText'])],
-        [Paragraph("C.T. Scan", styles['BodyText']), Paragraph("Review after 4 Days on Mar 28, 2023" , styles['BodyText'])],
-        [Paragraph("Paracheck for MPÐ", styles['BodyText']), Paragraph("" , styles['BodyText'])],
-        [Paragraph("CBC", styles['BodyText']), Paragraph("" , styles['BodyText'])],
+        [Paragraph(Advice, styles['BodyText']), Paragraph("<font size=10 color=black><b>Instruction :-</b></font>"+result_consultation[0]['instructions'], styles['BodyText'])],
+        [Paragraph(result_findings_symptoms[0].get('advice'), styles['BodyText']), Paragraph("", styles['BodyText'])],
+        # [Paragraph("C.T. Scan", styles['BodyText']), Paragraph("Review after 4 Days on Mar 28, 2023" , styles['BodyText'])],
+        # [Paragraph("Paracheck for MPÐ", styles['BodyText']), Paragraph("" , styles['BodyText'])],
+        # [Paragraph("CBC", styles['BodyText']), Paragraph("" , styles['BodyText'])],
     ]
 
     new_table_style_four = TableStyle([
