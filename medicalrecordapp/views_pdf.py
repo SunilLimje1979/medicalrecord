@@ -513,9 +513,11 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     medicine_str = "<font size=10 color=black><b>Rx :- </b></font><br/>"  # Initialize an empty string to store medicine names
     # print(result_patient_medications)
     for medication in result_patient_medications:
-        medicine_str += str(medication["medicine_name"])+" "+ str(medication["medicine_duration"])+"D "+str(medication["medicine_doses"])+" "+str(medication["doctor_instruction_text"])+ "<br/>"
+        medicine_str += str(medication["medicine_name"])+"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+ str(medication["medicine_duration"])+"D "+ "<br/>"
+        medicine_str += str(str(medication["medicine_doses"])+"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+str(medication["doctor_instruction_text"]))+ "<br/>"
         # medicine_str += str(medication["medicine_doses"]) + "<br/><br/>"
         # medicine_str += str(medication["doctor_instruction_text"]) + "<br/><br/>"
+         
     new_table_data_three = [
         [Paragraph("Wt&nbsp;:&nbsp;&nbsp;&nbsp;"+str(patient_weight)+"", styles['BodyText']), Paragraph(OE, styles['BodyText']), Paragraph(medicine_str, styles['BodyText'])],
         [Paragraph("Ht&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_height)+"", styles['BodyText']), Paragraph("Pulse &nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_heartratepluse)+"/min" , styles['BodyText'])],
@@ -578,7 +580,12 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     #fourth section end
     my_doc.build(flowables)
     return pdf_buffer
+ 
+ 
+ 
 
+
+ 
 ##################################################################clinic pdf
     
 @api_view(['POST'])
@@ -945,3 +952,305 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     my_doc.build(flowables)
     return pdf_buffer
 
+
+
+
+
+# def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms):
+    
+#     pdf_buffer = BytesIO()
+#     left_margin = 0
+#     right_margin = 0
+#     my_doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, topMargin=0, leftMargin=left_margin, rightMargin=right_margin)
+#     line_break = Spacer(1, 12)
+#     styles = getSampleStyleSheet()
+#     center_style = ParagraphStyle(
+#         'CenterHeading1',
+#         parent=styles['Heading1'],
+#         alignment=1,  # 0=left, 1=center, 2=right
+#     )
+
+#     if result_doctor:
+#         first_doctor_data = result_doctor[0]
+#         doctor_firstname = first_doctor_data.get('doctor_firstname',"")
+#         doctor_lastname = first_doctor_data.get('doctor_lastname',"")
+#         doctor_registrationno = first_doctor_data.get('doctor_registrationno',"")
+#         doctor_address =  first_doctor_data.get('doctor_address',"")
+#         doctor_mobileno =  first_doctor_data.get('doctor_mobileno',"")
+#         doctor_email =  first_doctor_data.get('doctor_email',"")
+#         doctor_pincode =  first_doctor_data.get('doctor_pincode',"")
+#         basic_education =  first_doctor_data.get('basic_education',"")
+#         additional_education =  first_doctor_data.get('additional_education',"")
+#         services_offered =  first_doctor_data.get('services_offered',"")
+#         education = str(basic_education) +", "+str(additional_education)
+#     else:
+#         first_doctor_data = ""
+#         doctor_firstname = ""
+#         doctor_lastname = ""
+#         doctor_registrationno = ""
+#         doctor_address =  ""
+#         doctor_mobileno =  ""
+#         doctor_email =  ""
+#         doctor_pincode = ""
+#         basic_education =  ""
+#         additional_education =  ""
+#         services_offered =  ""
+#         education = ""
+        
+#     if result_doctor_location:
+#         location_title = result_doctor_location['location_title']
+#     else:
+#         location_title = ""
+#     heading_text = "<font size=18 color=black><b>"+str(location_title)+"</b></font>"
+#     heading = Paragraph(heading_text, center_style)
+#     hr_line = HRFlowable(width="100%", color=colors.black, thickness=2, spaceBefore=10, spaceAfter=10)
+    
+#     drinfoblock = "<font size=15 color=black><b>" + str(doctor_firstname) + "&nbsp;"+str(doctor_lastname)+"</b></font> "
+    
+#     if result_doctor_location_availability["availability_day"]:
+#         availability_day = result_doctor_location_availability["availability_day"]
+#     else:
+#         availability_day =""
+#     if availability_day == 1:
+#         daytime= str(result_doctor_location_availability["availability_starttime"])+"-"+str(result_doctor_location_availability["availability_endtime"])
+#     else:
+#         daytime=""
+
+#     if result_doctor_location_availability["availability_order"]:
+#         availability_order = result_doctor_location_availability["availability_order"]
+#     else:
+#         availability_order = ""
+
+#     if availability_order == 1:
+#         ordertime = "Morning"
+#     elif availability_order == 2:
+#         ordertime = "Afternoon"
+#     elif availability_order == 3:
+#         ordertime = "Evening"
+#     else:
+#         ordertime = ""
+    
+#     hindi_style = ParagraphStyle(
+#         'HindiText',
+#         parent=styles['BodyText'],
+#         fontSize=12,
+#     )
+#     if result_doctor_location['services_offered_at']:
+#         services_offered_at = result_doctor_location['services_offered_at']
+#     else:
+#         services_offered_at = ""
+#     hindi_text = "नमस्ते, यह एक उदाहरण है!"
+#     table_data = [
+#         [Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])],
+#         [Paragraph(""+education+"", styles['BodyText'])], 
+#         [Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])],
+#         [Paragraph("<font size=10 color=black><b>"+str(services_offered)+"</b></font>", styles['BodyText'])],
+#         [Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])],
+#         [Paragraph(" "+str(doctor_address)+" Pin:"+str(doctor_pincode)+"", styles['BodyText'])],
+#         [Paragraph("Mob. No.:"+str(doctor_mobileno)+"", styles['BodyText'])],
+#         [Paragraph("E-mail:"+str(doctor_email)+"", styles['BodyText'])],
+#     ]
+    
+#     table_style = TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 1, colors.white),
+#         ('BOX', (0, 0), (-1, -1), 1, colors.white),
+#         ('PADDING', (0, 0), (-1, 0), 5),
+#         ('PADDING', (0, 1), (-1, -1), 0),
+#         ('LEFTPADDING', (0, 0), (-1, 0), 0),
+#         ('LEFTPADDING', (0, 1), (-1, -1), 0),
+#         ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+#         ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+#         ('TOPPADDING', (0, 0), (-1, 0), 5),
+#         ('TOPPADDING', (0, 1), (-1, -1), 0),
+#         ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+#         ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+#         ('VALIGN', (1, 0), (1, -1), 'TOP'),  # Align second column to the top
+#         ('SPAN', (1, 0), (1, -1)),
+#     ])
+
+#     table = Table(table_data, style=table_style, colWidths=[415, 165])
+#     flowables = [heading, table, hr_line]
+    
+#     if result_patient:
+#         first_patient_data = result_patient
+#         patient_firstname = first_patient_data.get('patient_firstname',"")
+#         patient_fateherhusbandname = first_patient_data.get('patient_fateherhusbandname',"")
+#         patient_lastname = first_patient_data.get('patient_lastname',"")
+#         # full_name = str(patient_firstname + " " + patient_fateherhusbandname + " " + patient_lastname)
+#         full_name = ""
+
+#         if patient_firstname:
+#             full_name += patient_firstname.strip()  # strip() to remove any leading/trailing whitespace
+
+#         if patient_fateherhusbandname:
+#             if full_name:
+#                 full_name += " "  # Add space if first name is not empty
+#             full_name += patient_fateherhusbandname.strip()
+
+#         if patient_lastname:
+#             if full_name:
+#                 full_name += " "  # Add space if first or father/husband name is not empty
+#             full_name += patient_lastname.strip()
+            
+#         patient_gender = first_patient_data.get('patient_gender',"")
+#     else:
+#         first_patient_data = ""
+#         patient_firstname = ""
+#         patient_fateherhusbandname = ""
+#         patient_lastname = ""
+#         full_name = ""
+#         patient_gender = ""
+    
+#     if patient_gender==0:
+#         gender = "Male"
+#     else:
+#         gender = "Female"
+#     if first_patient_data.get('patient_mobileno',""):
+#         patient_mobileno = first_patient_data.get('patient_mobileno',"")
+#     else:
+#         patient_mobileno = ""
+    
+#     Patient = "<font size=10 color=black><b>Patient's Name: "+str(full_name)+"   N/A "+str(gender)+"</b></font>"
+#     current_date = datetime.now()
+#     formatted_date = current_date.strftime(" %b %d, %Y")
+#     current_time = datetime.now().time()
+#     formatted_time = current_time.strftime("%I:%M %p")
+#     Date = "<font size=10 color=black><b>Date: &nbsp;"+str(formatted_date)+",</b></font>"
+#     Time = "<font size=10 color=black><b>"+str(formatted_time)+"</b></font>"
+#     hr_line_white = HRFlowable(width="100%", color=colors.white, thickness=2, spaceBefore=10, spaceAfter=10)
+
+#     # opd
+#     if result_consultation:
+#         appointment_id = result_consultation[0].get('appointment_id','')
+#     else:
+#         appointment_id = ""
+#     if appointment_id:
+#         formatted_appointment_id = (
+#             '0' + str(appointment_id) if 1 <= appointment_id <= 9 else str(appointment_id)
+#         )
+#     else:
+#         formatted_appointment_id=""
+
+#     current_month = datetime.now().strftime("%m")
+#     current_day = datetime.now().strftime("%d")
+#     opd_appointment_no = str(current_month)+str(current_day)+str(formatted_appointment_id)
+#     new_table_data = [
+#         [Paragraph(Patient, styles['BodyText']), Paragraph(Date, styles['BodyText'])],
+#         [Paragraph("Opd No:"+opd_appointment_no+" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  Mob.:"+str(patient_mobileno)+"", styles['BodyText']), Paragraph(Time, styles['BodyText'])],
+#         [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+#         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+#         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+#         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+#     ]
+
+#     table_style_second = TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 1, colors.white),
+#         ('BOX', (0, 0), (-1, -1), 1, colors.white),
+#         ('PADDING', (0, 0), (-1, 0), 5),
+#         ('PADDING', (0, 1), (-1, -1), 0),
+#         ('LEFTPADDING', (0, 0), (-1, 0), 0),
+#         ('LEFTPADDING', (0, 1), (-1, -1), 0),
+#         ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+#         ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+#         ('TOPPADDING', (0, 0), (-1, 0), 5),
+#         ('TOPPADDING', (0, 1), (-1, -1), 0),
+#         ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+#         ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+#     ])
+#     new_table = Table(new_table_data, style=table_style_second, colWidths=[415, 165])
+#     flowables.extend([new_table, hr_line_white])
+#     OE =  "<font size=10 color=black><b>O/E :-</b></font>"
+    
+#     if result_patientvitals:
+#         patient_heartratepluse = result_patientvitals['patient_heartratepluse']
+#         patient_bpsystolic = result_patientvitals['patient_bpsystolic']
+#         patient_bpdistolic = result_patientvitals['patient_bpdistolic']
+#         patient_painscale = result_patientvitals['patient_painscale']
+#         patient_respiratoryrate = result_patientvitals['patient_respiratoryrate']
+#         patient_temparature = result_patientvitals['patient_temparature']
+#         patient_chest = result_patientvitals['patient_chest']
+#         patient_ecg = result_patientvitals['patient_ecg']
+#         patient_height=result_patientvitals['height']
+#         patient_weight=result_patientvitals['weight']
+#         bp = str(patient_bpsystolic) +"/"+str(patient_bpdistolic)
+#     else:
+#         patient_heartratepluse = ""
+#         patient_bpsystolic = ""
+#         patient_bpdistolic = ""
+#         patient_painscale = ""
+#         patient_respiratoryrate = ""
+#         patient_temparature = ""
+#         patient_chest = ""
+#         patient_ecg = ""
+#         bp = ""
+#         patient_height=""
+#         patient_weight=""
+    
+#     medicine_str = "<font size=10 color=black><b>Rx :- </b></font><br/>"  # Initialize an empty string to store medicine names
+#     # print(result_patient_medications)
+#     for medication in result_patient_medications:
+#         medicine_str += str(medication["medicine_name"])+" "+ str(medication["medicine_duration"])+"D "+str(medication["medicine_doses"])+" "+str(medication["doctor_instruction_text"])+ "<br/>"
+#         # medicine_str += str(medication["medicine_doses"]) + "<br/><br/>"
+#         # medicine_str += str(medication["doctor_instruction_text"]) + "<br/><br/>"
+#     new_table_data_three = [
+#         [Paragraph("Wt&nbsp;:&nbsp;&nbsp;&nbsp;"+str(patient_weight)+"", styles['BodyText']), Paragraph(OE, styles['BodyText']), Paragraph(medicine_str, styles['BodyText'])],
+#         [Paragraph("Ht&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_height)+"", styles['BodyText']), Paragraph("Pulse &nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_heartratepluse)+"/min" , styles['BodyText'])],
+#         [Paragraph("Hr&nbsp;:&nbsp;&nbsp;&nbsp;"+str(patient_heartratepluse)+"", styles['BodyText']), Paragraph("Temp&nbsp;:&nbsp;&nbsp;&nbsp; "+str(patient_temparature)+"", styles['BodyText'])],
+#         [Paragraph("Bp&nbsp;:&nbsp;&nbsp;&nbsp;"+str(bp)+"", styles['BodyText']),],
+#         [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;", styles['BodyText'])],
+#         [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+#         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+#         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+#         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+#         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+#     ]
+
+#     new_table_style = TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 1, colors.white),
+#         ('BOX', (0, 0), (-1, -1), 1, colors.white),
+#         ('PADDING', (0, 0), (-1, 0), 0),
+#         ('PADDING', (0, 1), (-1, -1), 0),
+#         ('LEFTPADDING', (0, 0), (-1, 0), 0),
+#         ('LEFTPADDING', (0, 1), (-1, -1), 0),
+#         ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+#         ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+#         ('TOPPADDING', (0, 0), (-1, 0), 0),
+#         ('TOPPADDING', (0, 1), (-1, -1), 0),
+#         ('BOTTOMPADDING', (0, 0), (-1, 0), 0),
+#         ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+#         ('VALIGN', (2, 0), (2, -1), 'TOP'),
+#         ('SPAN', (2, 0), (2, -1)),
+#     ])
+#     # print(result_consultation)
+#     new_table_three = Table(new_table_data_three, style=new_table_style, colWidths=[193, 193, 193])
+#     flowables.extend([new_table_three, hr_line_white])
+#     Advice =  "<font size=10 color=black><b>Advice :-</b></font>"
+
+#     new_table_data_four = [
+#         [Paragraph(Advice, styles['BodyText']), Paragraph("<font size=10 color=black><b>Instruction :-</b></font>"+result_consultation[0]['instructions'], styles['BodyText'])],
+#         [Paragraph(result_findings_symptoms[0].get('advice'), styles['BodyText']), Paragraph("", styles['BodyText'])],
+#         # [Paragraph("C.T. Scan", styles['BodyText']), Paragraph("Review after 4 Days on Mar 28, 2023" , styles['BodyText'])],
+#         # [Paragraph("Paracheck for MPÐ", styles['BodyText']), Paragraph("" , styles['BodyText'])],
+#         # [Paragraph("CBC", styles['BodyText']), Paragraph("" , styles['BodyText'])],
+#     ]
+
+#     new_table_style_four = TableStyle([
+#         ('GRID', (0, 0), (-1, -1), 1, colors.white),
+#         ('BOX', (0, 0), (-1, -1), 1, colors.white),
+#         ('PADDING', (0, 0), (-1, 0), 0),
+#         ('PADDING', (0, 1), (-1, -1), 0),
+#         ('LEFTPADDING', (0, 0), (-1, 0), 0),
+#         ('LEFTPADDING', (0, 1), (-1, -1), 0),
+#         ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+#         ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+#         ('TOPPADDING', (0, 0), (-1, 0), 0),
+#         ('TOPPADDING', (0, 1), (-1, -1), 0),
+#         ('BOTTOMPADDING', (0, 0), (-1, 0), 0),
+#         ('BOTTOMPADDING', (0, 1), (-1, -1), 0)
+#     ])
+    
+#     new_table_four = Table(new_table_data_four, style=new_table_style_four, colWidths=[290,290])
+#     flowables.extend([new_table_four, hr_line_white])
+#     #fourth section end
+#     my_doc.build(flowables)
+#     return pdf_buffer
