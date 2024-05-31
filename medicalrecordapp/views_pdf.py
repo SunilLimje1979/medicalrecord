@@ -35,6 +35,7 @@ import requests
 from datetime import datetime
 from translate import Translator
 import qrcode
+import pytz
 
 from django.db.models import Q
 
@@ -366,9 +367,9 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     hindi_text = "नमस्ते, यह एक उदाहरण है!"
     table_data = [
         [Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])],
-        [Paragraph(""+education+"", styles['BodyText'])], 
+        [Paragraph(""+"", styles['BodyText'])], 
         [Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])],
-        [Paragraph("<font size=10 color=black><b>"+str(services_offered)+"</b></font>", styles['BodyText'])],
+        [Paragraph("<font size=10 color=black><b>"+"</b></font>", styles['BodyText'])],
         [Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])],
         [Paragraph(" "+str(doctor_address)+" Pin:"+str(doctor_pincode)+"", styles['BodyText'])],
         [Paragraph("Mob. No.:"+str(doctor_mobileno)+"", styles['BodyText'])],
@@ -434,11 +435,23 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     else:
         patient_mobileno = ""
     
-    Patient = "<font size=10 color=black><b>Patient's Name: "+str(full_name)+"   N/A "+str(gender)+"</b></font>"
+    Patient = "<font size=10 color=black><b>Patient's Name: "+str(full_name)+"     "+str(gender)+"</b></font>"
     current_date = datetime.now()
     formatted_date = current_date.strftime(" %b %d, %Y")
-    current_time = datetime.now().time()
+    # current_time = datetime.now().time()
+    # print('current time',current_time)
+    # formatted_time = current_time.strftime("%I:%M %p")
+    # print('formatted time',formatted_time)
+    # Set the desired time zone, e.g., 'Asia/Kolkata' or 'America/New_York'
+    time_zone = pytz.timezone('Asia/Kolkata')
+
+    # Get the current time in the specified time zone
+    current_time = datetime.now(time_zone)
+    # print('current time', current_time)
+
+    # Format the time
     formatted_time = current_time.strftime("%I:%M %p")
+    # print('formatted time', formatted_time)
     Date = "<font size=10 color=black><b>Date: &nbsp;"+str(formatted_date)+",</b></font>"
     Time = "<font size=10 color=black><b>"+str(formatted_time)+"</b></font>"
     hr_line_white = HRFlowable(width="100%", color=colors.white, thickness=2, spaceBefore=10, spaceAfter=10)
