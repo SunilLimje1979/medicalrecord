@@ -62,5 +62,6 @@ urlpatterns = [
     path("update_consultation_status/",update_consultation_status),
     path("update_prescription_details/",update_prescription_details),
     path("get_consultations_by_patient_id/",get_consultations_by_patient_id),
+    path("get_consultations_by_patient_and_doctor_id/",get_consultations_by_patient_and_doctor_id),
      
 ]

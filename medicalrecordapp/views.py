@@ -1671,3 +1671,41 @@ def get_consultations_by_patient_id(request):
     except Exception as e:
         # Handle other exceptions that may occur during query or serialization
         return Response({'message_code': 999, 'message_text': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+@api_view(["POST"])
+def get_consultations_by_patient_and_doctor_id(request):
+    # Retrieve the patient ID and doctor ID from the request data
+    patient_id = request.data.get('patient_id', None)
+    doctor_id = request.data.get('doctor_id', None)
+
+    # Check if patient ID and doctor ID are provided
+    if not patient_id:
+        return Response({'message_code': 999, 'message_text': 'Patient ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not doctor_id:
+        return Response({'message_code': 999, 'message_text': 'Doctor ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Query consultations for the given patient ID and doctor ID
+        consultations = Tblconsultations.objects.filter(patient_id=patient_id, doctor_id=doctor_id)
+
+        if not consultations.exists():
+            # Handle case when no consultations are found for the given patient ID and doctor ID
+            return Response({'message_code': 999, 'message_text': 'Consultations not found for the specified patient ID and doctor ID.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize consultations data
+        serializer = ConsultationSerializer(consultations, many=True)
+
+        # Prepare response data for successful retrieval
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Consultation details fetched successfully.',
+            'message_data': serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Handle other exceptions that may occur during query or serialization
+        return Response({'message_code': 999, 'message_text': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
