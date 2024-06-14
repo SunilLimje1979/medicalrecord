@@ -17,7 +17,7 @@ from django.http import FileResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4 ,landscape
 
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table,Image, TableStyle, Preformatted, XPreformatted,HRFlowable,Frame,PageTemplate
 from reportlab.rl_config import defaultPageSize
@@ -282,11 +282,55 @@ def fi_generateprescriptionpdf(request):
 
 
 def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms):
-    
+    print(result_doctor)
+    detail_url="http://13.233.211.102/doctor/api/get_prescription_settings_by_doctor/"
+    detail_response=requests.post(detail_url,json={'doctor_id':result_doctor[0].get('doctor_id')})
+    print(detail_response.text)
+    pagesize = A4
+    if(detail_response.json().get('message_code')==1000):
+            prescription_settings=(detail_response.json()).get('message_data')
+            print(prescription_settings)
+            if prescription_settings['paper_size'] == 2:
+                pagesize = landscape((A4[0], A4[1] / 2))
+            if(prescription_settings['header_type']==2):
+                link=prescription_settings['header_image']
+                link=None
+                if(link is not None):
+                    # Replace '/staticfiles/' with '/static/'
+                    updated_link = link.replace('/staticfiles/', '/static/')
+                    img_path="http://13.233.211.102/doctor"+updated_link
+                    header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
+                    header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
+                    img = Image(img_path, width=600, height=header_top_margin_in_pixels)
+                else:
+                    link="/staticfiles/media/header_images/Default.jpg"
+                    updated_link = link.replace('/staticfiles/', '/static/')
+                    img_path="http://13.233.211.102/doctor"+updated_link
+                    header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
+                    header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
+                    img = Image(img_path, width=600, height=header_top_margin_in_pixels)
+
+            elif(prescription_settings['header_type']==1):
+                options=['clinic_name','clinic_address','doctor_name','doctor_degree','doctor_speciality','doctor_availability','clinic_services','clinic_logo','clinic_mobile_number']
+                checked_options=[]
+                for option in options:
+                    if(prescription_settings[option]):
+                        checked_options.append(option)
+                        
+                print(checked_options)
+            else:
+                img=0
+    else:
+            print(detail_response.json().get('message_code'))
+            prescription_settings=0
+            print(prescription_settings)
+            img_path = 'img/logo1.jpg'
+            img = Image(img_path, width=50, height=50)
     pdf_buffer = BytesIO()
     left_margin = 0
     right_margin = 0
-    my_doc = SimpleDocTemplate(pdf_buffer, pagesize=A4, topMargin=0, leftMargin=left_margin, rightMargin=right_margin)
+    print("page_size",pagesize)
+    my_doc = SimpleDocTemplate(pdf_buffer, pagesize=pagesize, topMargin=0, leftMargin=left_margin, rightMargin=right_margin)
     line_break = Spacer(1, 12)
     styles = getSampleStyleSheet()
     center_style = ParagraphStyle(
@@ -365,36 +409,131 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     else:
         services_offered_at = ""
     hindi_text = "नमस्ते, यह एक उदाहरण है!"
-    table_data = [
-        [Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])],
-        [Paragraph(""+"", styles['BodyText'])], 
-        [Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])],
-        [Paragraph("<font size=10 color=black><b>"+"</b></font>", styles['BodyText'])],
-        [Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])],
-        [Paragraph(" "+str(doctor_address)+" Pin:"+str(doctor_pincode)+"", styles['BodyText'])],
-        [Paragraph("Mob. No.:"+str(doctor_mobileno)+"", styles['BodyText'])],
-        [Paragraph("E-mail:"+str(doctor_email)+"", styles['BodyText'])],
-    ]
-    
-    table_style = TableStyle([
-        ('GRID', (0, 0), (-1, -1), 1, colors.white),
-        ('BOX', (0, 0), (-1, -1), 1, colors.white),
-        ('PADDING', (0, 0), (-1, 0), 5),
-        ('PADDING', (0, 1), (-1, -1), 0),
-        ('LEFTPADDING', (0, 0), (-1, 0), 0),
-        ('LEFTPADDING', (0, 1), (-1, -1), 0),
-        ('RIGHTPADDING', (0, 0), (-1, 0), 0),
-        ('RIGHTPADDING', (0, 1), (-1, -1), 0),
-        ('TOPPADDING', (0, 0), (-1, 0), 5),
-        ('TOPPADDING', (0, 1), (-1, -1), 0),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
-        ('VALIGN', (1, 0), (1, -1), 'TOP'),  # Align second column to the top
-        ('SPAN', (1, 0), (1, -1)),
-    ])
 
-    table = Table(table_data, style=table_style, colWidths=[415, 165])
-    flowables = [heading, table, hr_line]
+    if(prescription_settings):
+            if(prescription_settings['header_type']==1):
+                table_data=[]
+                
+                # if('doctor_name' in checked_options):
+                #     table_data.extend([[Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])]])
+                # if('clinic_name' in checked_options):
+                #     table_data.extend([[Paragraph(str(location_title)+"", styles['BodyText'])]])
+                # if('clinic_address' in checked_options):
+                #     table_data.extend([ [Paragraph(" "+str(result_doctor_location['location_address'])+"", styles['BodyText'])]])
+                # if('doctor_availability' in checked_options):
+                #     table_data.extend([[Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])]])
+                # if('clinic_mobile_number' in checked_options):
+                #     table_data.extend([[Paragraph("Mob. No.:"+str(doctor_mobileno)+"", styles['BodyText'])]])
+                
+                # table_data.extend([[Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])]])
+                if 'doctor_name' in checked_options:
+                    table_data.append([Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])])
+                else:
+                    drinfoblock = "<font size=15 color=black><b>" + " " + "&nbsp;"+" "+"</b></font> "
+                    table_data.append([Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])])
+
+                if 'clinic_name' in checked_options:
+                    table_data.append([Paragraph(str(location_title), styles['BodyText'])])
+
+                if 'clinic_address' in checked_options:
+                    table_data.append([Paragraph(" " + str(result_doctor_location['location_address']), styles['BodyText'])])
+
+                if 'doctor_availability' in checked_options:
+                    table_data.append([Paragraph("Time: " + str(ordertime) + " " + str(daytime), styles['BodyText'])])
+
+                if 'clinic_mobile_number' in checked_options:
+                    table_data.append([Paragraph("Mob. No.:" + str(doctor_mobileno), styles['BodyText'])])
+
+                table_data.append([Paragraph("Regd. No. " + str(doctor_registrationno), styles['BodyText'])])
+
+            else:
+               table_data=[[Paragraph("")]]
+    
+            table_style = TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, colors.white),
+                ('BOX', (0, 0), (-1, -1), 1, colors.white),
+                ('PADDING', (0, 0), (-1, 0), 5),
+                ('PADDING', (0, 1), (-1, -1), 0),
+                ('LEFTPADDING', (0, 0), (-1, 0), 0),
+                ('LEFTPADDING', (0, 1), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+                ('TOPPADDING', (0, 0), (-1, 0), 5),
+                ('TOPPADDING', (0, 1), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+                ('VALIGN', (1, 0), (1, -1), 'TOP'),  # Align second column to the top
+                ('SPAN', (1, 0), (1, -1)),
+            ])
+
+            table = Table(table_data, style=table_style, colWidths=[415, 165])
+            # print(table)
+            if(prescription_settings['header_type']==2):
+                hr_line = HRFlowable(width="100%", color=colors.black, thickness=2,spaceBefore=0, spaceAfter=2)
+                flowables = [img, table]
+
+            elif(prescription_settings['header_type']==1):
+                table = Table(table_data, style=table_style, colWidths=[415, 165])
+                hr_line = HRFlowable(width="100%", color=colors.black, thickness=2,spaceBefore=2, spaceAfter=2)
+                if('clinic_logo' in checked_options):
+                    api_url="http://13.233.211.102/doctor/api/get_all_doctor_location/"
+                    response=requests.post(api_url,json={"doctor_location_id":result_doctor_location.get('doctor_location_id')})
+                    data=response.json().get("message_data",{})
+                    # print(data)
+                    link=(data[0]).get('location_image')
+                    if(link is None):
+                        link="/staticfiles/media/location_images/cliniclogo2.jpg"
+                    # Replace '/staticfiles/' with '/static/'
+                    updated_link = link.replace('/staticfiles/', '/static/')
+                    img_path="http://13.233.211.102/doctor"+updated_link
+                    #img = Image(img_path, width=100, height=100)
+                    img_table = create_aligned_image_table(img_path,prescription_settings['clinic_logo_alignment'], width=50, height=50)  # Change 'center' to 'left' or 'right' based on your input
+                    flowables = [img_table,table, hr_line]
+                else:
+                    heading = Paragraph(heading_text, center_style)
+                    flowables = [heading,table, hr_line]
+                
+            
+            else:
+                # header_top_margin=int(prescription_settings['header_top_margin'])
+                header_top_margin = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0) * 72.0
+                hr_line = HRFlowable(width="100%", color=colors.black, thickness=2, spaceBefore=header_top_margin, spaceAfter=2)
+                flowables = [table,hr_line]
+    
+    else:
+        print("no prescription setting avaliable")
+        table_data = [
+                    [Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])],
+                    [Paragraph(""+"", styles['BodyText'])], 
+                    [Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])],
+                    [Paragraph("<font size=10 color=black><b>"+"</b></font>", styles['BodyText'])],
+                    [Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])],
+                    [Paragraph(" "+str(doctor_address)+" Pin:"+str(doctor_pincode)+"", styles['BodyText'])],
+                    [Paragraph("Mob. No.:"+str(doctor_mobileno)+"", styles['BodyText'])],
+                    [Paragraph("E-mail:"+str(doctor_email)+"", styles['BodyText'])],
+                ]
+        table_style = TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, colors.white),
+                ('BOX', (0, 0), (-1, -1), 1, colors.white),
+                ('PADDING', (0, 0), (-1, 0), 5),
+                ('PADDING', (0, 1), (-1, -1), 0),
+                ('LEFTPADDING', (0, 0), (-1, 0), 0),
+                ('LEFTPADDING', (0, 1), (-1, -1), 0),
+                ('RIGHTPADDING', (0, 0), (-1, 0), 0),
+                ('RIGHTPADDING', (0, 1), (-1, -1), 0),
+                ('TOPPADDING', (0, 0), (-1, 0), 5),
+                ('TOPPADDING', (0, 1), (-1, -1), 0),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 0),
+                ('VALIGN', (1, 0), (1, -1), 'TOP'),  # Align second column to the top
+                ('SPAN', (1, 0), (1, -1)),
+            ])
+        table = Table(table_data, style=table_style, colWidths=[415, 165])
+        hr_line = HRFlowable(width="100%", color=colors.black, thickness=2,spaceBefore=2, spaceAfter=2)
+        flowables = [heading,table, hr_line]
+         
+         
+
     
     if result_patient:
         first_patient_data = result_patient
@@ -454,7 +593,8 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     # print('formatted time', formatted_time)
     Date = "<font size=10 color=black><b>Date: &nbsp;"+str(formatted_date)+",</b></font>"
     Time = "<font size=10 color=black><b>"+str(formatted_time)+"</b></font>"
-    hr_line_white = HRFlowable(width="100%", color=colors.white, thickness=2, spaceBefore=10, spaceAfter=10)
+    hr_line_white = HRFlowable(width="100%", color=colors.white, thickness=2, spaceBefore=6, spaceAfter=4)
+
 
     # opd
     if result_consultation:
@@ -474,7 +614,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     new_table_data = [
         [Paragraph(Patient, styles['BodyText']), Paragraph(Date, styles['BodyText'])],
         [Paragraph("Opd No:"+opd_appointment_no+" &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  Mob.:"+str(patient_mobileno)+"", styles['BodyText']), Paragraph(Time, styles['BodyText'])],
-        [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
+        # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
         # [Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;", styles['BodyText']), Paragraph("", styles['BodyText'])],
@@ -538,12 +678,12 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         [Paragraph("Bp&nbsp;:&nbsp;&nbsp;&nbsp;"+str(bp)+"", styles['BodyText']),],
         [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp;", styles['BodyText'])],
         [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
-        # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
+        [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
         # [Paragraph("", styles['BodyText']), Paragraph("&nbsp;&nbsp;&nbsp;&nbsp; ", styles['BodyText'])],
     ]
-
+    
     new_table_style = TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.white),
         ('BOX', (0, 0), (-1, -1), 1, colors.white),
@@ -560,6 +700,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         ('VALIGN', (2, 0), (2, -1), 'TOP'),
         ('SPAN', (2, 0), (2, -1)),
     ])
+     
     # print(result_consultation)
     new_table_three = Table(new_table_data_three, style=new_table_style, colWidths=[193, 193, 193])
     flowables.extend([new_table_three, hr_line_white])
@@ -595,7 +736,56 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     return pdf_buffer
  
  
- 
+
+def create_aligned_image_table(image_path, alignment=0, width=50, height=50):
+    img = Image(image_path,width,height)
+    if alignment == 2:  # Center
+        table_data = [["", img, ""]]
+        table_style = TableStyle([
+            ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),    # Set top padding to 0
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0), # Set bottom padding to 0
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),   # Set left padding to 0 (optional)
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),  # Set right padding to 0 (optional)
+            ('TOPMARGIN', (0, 0), (-1, -1), 0),     # Set top margin to 0
+            ('BOTTOMMARGIN', (0, 0), (-1, -1), 0)   # Set bottom margin to 0
+        ])
+    elif alignment == 1:  # Left
+        table_data = [[img, ""]]
+        table_style = TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),    # Set top padding to 0
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0), # Set bottom padding to 0
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),   # Set left padding to 0 (optional)
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),  # Set right padding to 0 (optional)
+            ('TOPMARGIN', (0, 0), (-1, -1), 0),     # Set top margin to 0
+            ('BOTTOMMARGIN', (0, 0), (-1, -1), 0)   # Set bottom margin to 0
+        ])
+    elif alignment == 3:  # Right
+        table_data = [["", img]]
+        table_style = TableStyle([
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 0),    # Set top padding to 0
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0), # Set bottom padding to 0
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),   # Set left padding to 0 (optional)
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),  # Set right padding to 0 (optional)
+            ('TOPMARGIN', (0, 0), (-1, -1), 0),     # Set top margin to 0
+            ('BOTTOMMARGIN', (0, 0), (-1, -1), 0)   # Set bottom margin to 0
+        ])
+    else:
+        raise ValueError("Invalid alignment option")
+
+    # Setting column widths to ensure image alignment
+    if(alignment==1):
+        width=150
+    elif(alignment==3):
+        width=250
+    col_widths = [width + 4*inch if alignment == 1 else width,width,width + 4*inch if alignment == 3 else width]
+
+    table = Table(table_data, colWidths=col_widths)
+    table.setStyle(table_style)
+    return table
 
 
  
