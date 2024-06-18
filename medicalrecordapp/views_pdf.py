@@ -294,7 +294,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                 pagesize = landscape((A4[0], A4[1] / 2))
             if(prescription_settings['header_type']==2):
                 link=prescription_settings['header_image']
-                link=None
+                # link=None
                 if(link is not None):
                     # Replace '/staticfiles/' with '/static/'
                     updated_link = link.replace('/staticfiles/', '/static/')
