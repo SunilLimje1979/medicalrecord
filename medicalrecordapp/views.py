@@ -1709,3 +1709,817 @@ def get_consultations_by_patient_and_doctor_id(request):
     except Exception as e:
         # Handle other exceptions that may occur during query or serialization
         return Response({'message_code': 999, 'message_text': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+####################Pharmacy
+import random
+import string
+
+@api_view(["POST"])
+def insert_pharmacist(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        shop_name = request.data.get('shop_name')
+        shop_owner_number = request.data.get('shop_owner_number')
+
+        # Validate required fields
+        if not shop_name:
+            response_data['message_text'] = 'Shop name is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not shop_owner_number:
+            response_data['message_text'] = 'Shop owner number is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Generate a random 32-character pharmacist_token
+        pharmacist_token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+
+        # Prepare data for serializer
+        pharmacist_data = request.data.copy()
+        pharmacist_data['pharmacist_token'] = pharmacist_token
+
+        current_datetime = datetime.now()
+        pharmacist_data['created_on']=int(current_datetime.timestamp())
+
+        serializer = tblPharmacistSerializer(data=pharmacist_data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Pharmacist details inserted successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def pharmacistLogin(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        # Validate required fields
+        if not username:
+            response_data['message_text'] = 'Username is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not password:
+            response_data['message_text'] = 'Password is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Check if pharmacist exists with the provided username and password
+        try:
+            pharmacist = tblPharmacist.objects.get(pharmacist_username=username, pharmacist_password=password)
+            serializer = tblPharmacistSerializer(pharmacist)
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Login successful.'
+            response_data['message_data'] = serializer.data
+            
+        except tblPharmacist.DoesNotExist:
+            response_data['message_text'] = 'Invalid username or password.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_pharmacist_details_bytoken(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        pharmacist_token = request.data.get('pharmacist_token')
+
+        # Validate required field
+        if not pharmacist_token:
+            response_data['message_text'] = 'Pharmacist token is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the pharmacist details using .get() since pharmacist_token is unique
+        try:
+            pharmacist = tblPharmacist.objects.get(pharmacist_token=pharmacist_token)
+        except tblPharmacist.DoesNotExist:
+            response_data['message_text'] = 'Pharmacist not found.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize the data, excluding sensitive fields
+        data = tblPharmacistSerializer(pharmacist).data
+        data.pop('pharmacist_username', None)
+        data.pop('pharmacist_password', None)
+
+        response_data['message_code'] = 1000
+        response_data['message_text'] = 'Pharmacist details retrieved successfully.'
+        response_data['message_data'] = data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+@api_view(["POST"])
+def insert_doctor_pharmacist_link(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        doctor_id = request.data.get('doctor_id')
+        location_id = request.data.get('location_id')
+        pharmacist_id = request.data.get('pharmacist_id')
+
+        # Validate required fields
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not location_id:
+            response_data['message_text'] = 'Location ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not pharmacist_id:
+            response_data['message_text'] = 'Pharmacist ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Check if the combination of doctor_id, location_id, and pharmacist_id already exists
+        existing_link = tblDoctorPharmacistlink.objects.filter(
+            doctor_id=doctor_id, location_id=location_id, pharmacist_id=pharmacist_id, is_deleted=0
+        ).first()
+
+        if existing_link:
+            response_data['message_code']=1001
+            response_data['message_text'] = 'already Approved'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Prepare data for serializer
+        link_data = request.data.copy()
+
+        current_datetime = datetime.now()
+        link_data['created_on'] = int(current_datetime.timestamp())
+
+        serializer = tblDoctorPharmacistlinkSerializer(data=link_data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Doctor-Pharmacist linked successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+# @api_view(["POST"])
+# def get_doctor_pharmacist_bydoctorid(request):
+#     debug = []
+#     response_data = {
+#         'message_code': 999,
+#         'message_text': 'Error occurred.',
+#         'message_data': [],
+#         'message_debug': debug
+#     }
+
+#     try:
+#         doctor_id = request.data.get('doctor_id')
+
+#         # Validate required field
+#         if not doctor_id:
+#             response_data['message_text'] = 'Doctor ID is required.'
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Fetch all records linked to the provided doctor_id
+#         doctor_pharmacist_links = tblDoctorPharmacistlink.objects.filter(doctor_id=doctor_id, is_deleted=0).order_by('-doctorpharmacist_id')
+
+#         if doctor_pharmacist_links.exists():
+#             serializer = tblDoctorPharmacistlinkSerializer(doctor_pharmacist_links, many=True)
+#             response_data['message_code'] = 1000
+#             response_data['message_text'] = 'Doctor-Pharmacist list retrieved successfully.'
+#             response_data['message_data'] = serializer.data
+#         else:
+#             response_data['message_text'] = 'No Doctor-Pharmacist found for the provided Doctor ID.'
+
+#     except Exception as e:
+#         response_data['message_text'] = str(e)
+#         debug.append(str(e))
+
+#     return Response(response_data, status=status.HTTP_200_OK)
+@api_view(["POST"])
+def get_doctor_pharmacist_bydoctorid(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        doctor_id = request.data.get('doctor_id')
+        Status = request.data.get('Status')
+        # Validate required field
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if Status is None:  
+            # Fetch all records as status is not passed
+            doctor_pharmacist_links = tblDoctorPharmacistlink.objects.filter(
+                doctor_id=doctor_id, 
+                is_deleted=0
+            ).order_by('-doctorpharmacist_id')
+        
+        else: 
+            # Fetch only active or deactive record depending on status value if status=0 means active and if status=1 then deactive
+            doctor_pharmacist_links = tblDoctorPharmacistlink.objects.filter(
+                doctor_id=doctor_id, 
+                status=Status,
+                is_deleted=0,
+            ).order_by('-doctorpharmacist_id')
+
+
+        if doctor_pharmacist_links.exists():
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Doctor-Pharmacist list retrieved successfully.'
+            if(Status is not None):
+                if(Status==0):
+                    response_data['message_text'] = 'Active Approval  list retrieved successfully.'
+                else:
+                    response_data['message_text'] = 'Inactive Approval  list retrieved successfully.'
+
+
+            response_data['message_data'] = []
+
+            for link in doctor_pharmacist_links:
+                link_data = tblDoctorPharmacistlinkSerializer(link).data
+
+                # Fetch pharmacist details based on pharmacist_id
+                pharmacist = link.pharmacist_id
+                if pharmacist:
+                    pharmacist_data = tblPharmacistSerializer(pharmacist).data
+                    link_data['pharmacist_details'] = pharmacist_data
+
+                response_data['message_data'].append(link_data)
+
+        else:
+            response_data['message_text'] = 'No Doctor-Pharmacist found for the provided Doctor ID.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+@api_view(["POST"])
+def update_doctor_pharmacist_status(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        doctorpharmacist_id = request.data.get('doctorpharmacist_id')
+        new_status = request.data.get('status')
+
+        # Validate required fields
+        if not doctorpharmacist_id:
+            response_data['message_text'] = 'DoctorPharmacist ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if new_status is None:
+            response_data['message_text'] = 'Status is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the record to update the status using .get()
+        try:
+            doctor_pharmacist_link = tblDoctorPharmacistlink.objects.get(
+                doctorpharmacist_id=doctorpharmacist_id,
+                is_deleted=0
+            )
+        except tblDoctorPharmacistlink.DoesNotExist:
+            response_data['message_text'] = 'Doctor-Pharmacist link not found.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Update the status field
+        doctor_pharmacist_link.status = new_status
+        doctor_pharmacist_link.save()
+
+        response_data['message_code'] = 1000
+        response_data['message_text'] = 'Status updated successfully.'
+        response_data['message_data'] = tblDoctorPharmacistlinkSerializer(doctor_pharmacist_link).data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def insert_prescribe_pharmacist(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract required fields from request
+        doctor_id = request.data.get('doctor_id')
+        patient_id = request.data.get('patient_id')
+        prescription_id = request.data.get('prescription_id')
+        pharmacist_id = request.data.get('pharmacist_id')
+
+        # Validate required fields
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not patient_id:
+            response_data['message_text'] = 'Patient ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not prescription_id:
+            response_data['message_text'] = 'Prescription ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not pharmacist_id:
+            response_data['message_text'] = 'Pharmacist ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Prepare data for serializer
+        link_data = request.data.copy()
+
+        current_datetime = datetime.now()
+        link_data['created_on'] = int(current_datetime.timestamp())
+       
+
+        serializer = tblPrescribePharmacistSerializer(data=link_data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Pharmacist prescribed successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def get_pharmacist_doctor_bypharmacistid(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        pharmacist_id = request.data.get('pharmacist_id')
+        Status = request.data.get('Status')
+
+        # Validate required field
+        if not pharmacist_id:
+            response_data['message_text'] = 'Pharmacist ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if Status is None:  
+            # Fetch all records as status is not passed
+            doctor_pharmacist_links = tblDoctorPharmacistlink.objects.filter(
+                pharmacist_id=pharmacist_id,
+                is_deleted=0
+            ).order_by('-doctorpharmacist_id')
+        
+        else: 
+            # Fetch only active or inactive records depending on status value
+            doctor_pharmacist_links = tblDoctorPharmacistlink.objects.filter(
+                pharmacist_id=pharmacist_id, 
+                status=Status,
+                is_deleted=0,
+            ).order_by('-doctorpharmacist_id')
+
+        if doctor_pharmacist_links.exists():
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Pharmacist-Doctor list retrieved successfully.'
+            
+            if Status is not None:
+                if Status == 0:
+                    response_data['message_text'] = 'Active Approval list retrieved successfully.'
+                else:
+                    response_data['message_text'] = 'Inactive Approval list retrieved successfully.'
+
+            response_data['message_data'] = []
+
+            for link in doctor_pharmacist_links:
+                link_data = tblDoctorPharmacistlinkSerializer(link).data
+
+                # Fetch doctor details based on doctor_id
+                doctor = link.doctor_id
+                if doctor:
+                    doctor_data = DoctorSerializer(doctor).data
+
+                    # Exclude password and login_token
+                    doctor_data.pop('password', None)
+                    doctor_data.pop('doctor_login_token', None)
+
+                    link_data['doctor_details'] = doctor_data
+
+                response_data['message_data'].append(link_data)
+
+        else:
+            response_data['message_text'] = 'No Doctor-Pharmacist found for the provided Pharmacist ID.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+from datetime import datetime, timedelta
+
+# @api_view(["POST"])
+# def get_patientdetails_by_doctor_pharmacist_id(request):
+#     debug = []
+#     response_data = {
+#         'message_code': 999,
+#         'message_text': 'Error occurred.',
+#         'message_data': [],
+#         'message_debug': debug
+#     }
+
+#     try:
+#         doctor_id = request.data.get('doctor_id')
+#         pharmacist_id = request.data.get('pharmacist_id')
+
+#         # Validate required fields
+#         if not doctor_id or not pharmacist_id:
+#             response_data['message_text'] = 'Doctor ID and Pharmacist ID are required.'
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Calculate the date range: current date to previous 3 days
+#         current_date = datetime.now()
+#         previous_date = current_date - timedelta(days=3)
+#         current_timestamp = int(current_date.timestamp())
+#         previous_timestamp = int(previous_date.timestamp())
+#         print(current_date,previous_date)
+
+#         # Fetch records from tblPrescribePharmacist within the date range
+#         prescribed_pharmacists = tblPrescribePharmacist.objects.filter(
+#             doctor_id=doctor_id,
+#             pharmacist_id=pharmacist_id,
+#             created_on__range=(previous_timestamp, current_timestamp),
+#             is_deleted=0
+#         ).order_by('-created_on')
+
+#         if prescribed_pharmacists.exists():
+#             response_data['message_code'] = 1000
+#             response_data['message_text'] = 'Patient prescription details retrieved successfully.'
+#             response_data['message_data'] = []
+
+#             for prescribe in prescribed_pharmacists:
+#                 prescribe_data = tblPrescribePharmacistSerializer(prescribe).data
+
+#                 # Fetch patient details based on patient_id
+#                 patient = prescribe.patient_id
+#                 if patient:
+#                     patient_data = TblpatientsSerializer(patient).data
+#                     prescribe_data['patient_details'] = patient_data
+
+#                 # Fetch consultation ID from prescription based on prescription_id
+#                 prescription = prescribe.prescription_id
+#                 if prescription:
+#                     prescribe_data['consultation_id'] = prescription.consultation_id.consultation_id
+
+#                 response_data['message_data'].append(prescribe_data)
+#         else:
+#             response_data['message_text'] = 'No prescription records found for the provided Doctor and Pharmacist IDs.'
+
+#     except Exception as e:
+#         response_data['message_text'] = str(e)
+#         debug.append(str(e))
+
+#     return Response(response_data, status=status.HTTP_200_OK)
+
+from datetime import datetime, timedelta
+
+@api_view(["POST"])
+def get_patientdetails_by_doctor_pharmacist_id(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        doctor_id = request.data.get('doctor_id')
+        pharmacist_id = request.data.get('pharmacist_id')
+
+        # Validate required fields
+        if not doctor_id or not pharmacist_id:
+            response_data['message_text'] = 'Doctor ID and Pharmacist ID are required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Calculate the date range: start from 12:00 AM of the previous day to 11:59 PM of the current day
+        current_date = datetime.now().replace(hour=23, minute=59, second=59)  # 11:59 PM of the current day
+        previous_date = (current_date - timedelta(days=3)).replace(hour=0, minute=0, second=0)  # 12:00 AM of the previous 3 day
+        
+        # print(current_date, previous_date)
+
+        # Convert to timestamp for filtering
+        current_timestamp = int(current_date.timestamp())
+        previous_timestamp = int(previous_date.timestamp())
+
+        # Fetch records from tblPrescribePharmacist within the updated date range
+        prescribed_pharmacists = tblPrescribePharmacist.objects.filter(
+            doctor_id=doctor_id,
+            pharmacist_id=pharmacist_id,
+            created_on__range=(previous_timestamp, current_timestamp),
+            is_deleted=0
+        ).order_by('-created_on')
+
+        if prescribed_pharmacists.exists():
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Patient prescription details retrieved successfully.'
+            response_data['message_data'] = []
+
+            for prescribe in prescribed_pharmacists:
+                prescribe_data = tblPrescribePharmacistSerializer(prescribe).data
+
+                # Fetch patient details based on patient_id
+                patient = prescribe.patient_id
+                if patient:
+                    patient_data = TblpatientsSerializer(patient).data
+                    prescribe_data['patient_details'] = patient_data
+
+                # Fetch consultation ID from prescription based on prescription_id
+                prescription = prescribe.prescription_id
+                if prescription:
+                    prescribe_data['consultation_id'] = prescription.consultation_id.consultation_id
+
+                response_data['message_data'].append(prescribe_data)
+        else:
+            response_data['message_text'] = 'No prescription records found for the provided Doctor and Pharmacist IDs.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def update_pharma_status(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Get the prescribepharmacist_id and pharma_status from the request
+        prescribepharmacist_id = request.data.get('prescribepharmacist_id')
+        pharma_status = request.data.get('pharma_status')
+
+        # Validate required fields
+        if not prescribepharmacist_id:
+            response_data['message_text'] = 'Prescribe Pharmacist ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if pharma_status is None:
+            response_data['message_text'] = 'Pharma status is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the record by prescribepharmacist_id
+        try:
+            prescribe_pharmacist_record = tblPrescribePharmacist.objects.get(
+                prescribepharmacist_id=prescribepharmacist_id, 
+                is_deleted=0
+            )
+        except tblPrescribePharmacist.DoesNotExist:
+            response_data['message_text'] = 'Record not found.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Update the pharma_status
+        prescribe_pharmacist_record.pharma_status = pharma_status
+        prescribe_pharmacist_record.save()
+
+        # Serialize the updated data
+        serializer = tblPrescribePharmacistSerializer(prescribe_pharmacist_record)
+        response_data['message_code'] = 1000
+        response_data['message_text'] = 'Pharma status updated successfully.'
+        response_data['message_data'] = serializer.data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def filter_patientdetails_by_options(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        doctor_id = request.data.get('doctor_id')
+        pharmacist_id = request.data.get('pharmacist_id')
+        pharma_status = request.data.get('pharma_status')
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
+
+        # Validate required fields
+        if not doctor_id or not pharmacist_id:
+            response_data['message_text'] = 'Doctor ID and Pharmacist ID are required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Initialize filter query
+        filter_conditions = {
+            'doctor_id': doctor_id,
+            'pharmacist_id': pharmacist_id,
+            'is_deleted': 0
+        }
+
+        # Filter by pharma_status if provided
+        if pharma_status is not None:
+            filter_conditions['pharma_status'] = pharma_status
+
+        # Handle date filtering logic
+        if start_date and end_date:
+            # Filter by start and end date range
+            start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0)
+            end_date_dt = datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+            epoch_start_date = int(start_date_dt.timestamp())
+            epoch_end_date = int(end_date_dt.timestamp())
+            filter_conditions['created_on__range'] = (epoch_start_date, epoch_end_date)
+        elif start_date:
+            # Filter by start date only (same day)
+            start_date_dt = datetime.strptime(start_date, "%Y-%m-%d").replace(hour=0, minute=0, second=0)
+            end_date_dt = start_date_dt.replace(hour=23, minute=59, second=59)
+            epoch_start_date = int(start_date_dt.timestamp())
+            epoch_end_date = int(end_date_dt.timestamp())
+            filter_conditions['created_on__range'] = (epoch_start_date, epoch_end_date)
+
+        print(filter_conditions)
+        # Fetch records based on the filter conditions
+        prescribed_pharmacists = tblPrescribePharmacist.objects.filter(
+            **filter_conditions
+        ).order_by('-created_on')
+
+        if prescribed_pharmacists.exists():
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Filtered prescription details retrieved successfully.'
+            response_data['message_data'] = []
+
+            for prescribe in prescribed_pharmacists:
+                prescribe_data = tblPrescribePharmacistSerializer(prescribe).data
+
+                # Fetch patient details based on patient_id
+                patient = prescribe.patient_id
+                if patient:
+                    patient_data = TblpatientsSerializer(patient).data
+                    prescribe_data['patient_details'] = patient_data
+
+                # Fetch consultation ID from prescription based on prescription_id
+                prescription = prescribe.prescription_id
+                if prescription:
+                    prescribe_data['consultation_id'] = prescription.consultation_id.consultation_id
+
+                response_data['message_data'].append(prescribe_data)
+        else:
+            response_data['message_text'] = 'No prescription records found for the provided filter options.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+from django.db.models import Count
+@api_view(["POST"])
+def get_pharmacist_stats(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': {},
+        'message_debug': debug
+    }
+
+    try:
+        pharmacist_id = request.data.get('pharmacist_id')
+
+        # Validate required field
+        if not pharmacist_id:
+            response_data['message_text'] = 'Pharmacist ID is required.'
+            return Response(response_data, status=200)
+
+        # Total doctors associated with the pharmacist (status=0 for active)
+        total_doctor_count = tblDoctorPharmacistlink.objects.filter(
+            pharmacist_id=pharmacist_id,
+            status=0,  # 0 means active or associated
+            is_deleted=0
+        ).count()
+
+        # Count pharma_status for each status (0-5)
+        pharma_status_counts = tblPrescribePharmacist.objects.filter(
+            pharmacist_id=pharmacist_id,
+            is_deleted=0
+        ).values('pharma_status').annotate(count=Count('pharma_status'))
+
+        # Unique patients associated with the pharmacist (distinct patient_ids)
+        unique_patient_count = tblPrescribePharmacist.objects.filter(
+            pharmacist_id=pharmacist_id,
+            is_deleted=0
+        ).values('patient_id').distinct().count()
+
+        # Preparing the message data for response
+        pharma_status_dict = {status['pharma_status']: status['count'] for status in pharma_status_counts}
+        response_data['message_data'] = {
+            'total_doctor_count': total_doctor_count,
+            'pharma_status_counts': pharma_status_dict,
+            'unique_patient_count': unique_patient_count
+        }
+
+        response_data['message_code'] = 1000
+        response_data['message_text'] = 'Pharmacist counts retrieved successfully.'
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=200)
+
+
+
+

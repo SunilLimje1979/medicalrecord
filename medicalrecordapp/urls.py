@@ -63,5 +63,17 @@ urlpatterns = [
     path("update_prescription_details/",update_prescription_details),
     path("get_consultations_by_patient_id/",get_consultations_by_patient_id),
     path("get_consultations_by_patient_and_doctor_id/",get_consultations_by_patient_and_doctor_id),
-     
+
+    path('insert_pharmacist/',insert_pharmacist,name='insert_pharmacist'),
+    path('pharmacistLogin/',pharmacistLogin,name='pharmacistLogin'),
+    path('get_pharmacist_details_bytoken/',get_pharmacist_details_bytoken,name='get_pharmacist_details_bytoken'),
+    path('insert_doctor_pharmacist_link/',insert_doctor_pharmacist_link,name='insert_doctor_pharmacist_link'),
+    path('get_doctor_pharmacist_bydoctorid/',get_doctor_pharmacist_bydoctorid,name='get_doctor_pharmacist_bydoctorid'),
+    path('update_doctor_pharmacist_status/',update_doctor_pharmacist_status,name='update_doctor_pharmacist_status'),
+    path('insert_prescribe_pharmacist/',insert_prescribe_pharmacist,name='insert_prescribe_pharmacist'),
+    path('get_pharmacist_doctor_bypharmacistid/',get_pharmacist_doctor_bypharmacistid,name='get_pharmacist_doctor_bypharmacistid'),
+    path('get_patientdetails_by_doctor_pharmacist_id/',get_patientdetails_by_doctor_pharmacist_id,name='get_patientdetails_by_doctor_pharmacist_id'),
+    path('update_pharma_status/',update_pharma_status,name='update_pharma_status'),
+    path('filter_patientdetails_by_options/',filter_patientdetails_by_options,name='filter_patientdetails_by_options'),
+    path('get_pharmacist_stats/',get_pharmacist_stats,name='get_pharmacist_stats'),
 ]
