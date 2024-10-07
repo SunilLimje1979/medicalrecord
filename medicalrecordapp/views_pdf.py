@@ -950,6 +950,12 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     
     if result_doctor_location:
         location_title = result_doctor_location[0].get('location_title', None)
+        link=(result_doctor_location[0]).get('location_image')
+        if(link is None):
+            link="/staticfiles/media/location_images/cliniclogo2.jpg"
+        # Replace '/staticfiles/' with '/static/'
+        updated_link = link.replace('/staticfiles/', '/static/')
+        img_path="http://13.233.211.102/doctor"+updated_link
     else:
         location_title = ""
 
