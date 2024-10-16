@@ -76,4 +76,22 @@ urlpatterns = [
     path('update_pharma_status/',update_pharma_status,name='update_pharma_status'),
     path('filter_patientdetails_by_options/',filter_patientdetails_by_options,name='filter_patientdetails_by_options'),
     path('get_pharmacist_stats/',get_pharmacist_stats,name='get_pharmacist_stats'),
+
+
+    path('insert_laboratory/',insert_laboratory,name='insert_laboratory'),
+    path('LaboratoryLogin/',LaboratoryLogin,name='LaboratoryLogin'),
+    path('get_laboratory_details_bytoken/',get_laboratory_details_bytoken,name='get_laboratory_details_bytoken'),
+    path('insert_doctor_laboratory_link/',insert_doctor_laboratory_link,name='insert_doctor_laboratory_link'),
+    path('get_doctor_laboratory_bydoctorid/',get_doctor_laboratory_bydoctorid,name='get_doctor_laboratory_bydoctorid'),
+    path('update_doctor_laboratory_status/',update_doctor_laboratory_status,name='update_doctor_laboratory_status'),
+    path('insert_prescribe_laboratory/',insert_prescribe_laboratory,name='insert_prescribe_laboratory'),
+    path('get_laboratory_doctor_bylaboratoryid/',get_laboratory_doctor_bylaboratoryid,name='get_laboratory_doctor_bylaboratoryid'),
+    path('get_patientdetails_by_doctor_laboratory_id/',get_patientdetails_by_doctor_laboratory_id,name='get_patientdetails_by_doctor_laboratory_id'),
+    path('update_labinvestigation_details_by_patientlabid/',update_labinvestigation_details_by_patientlabid,name='update_labinvestigation_details_by_patientlabid'),
+    path('get_patientdetails_by_laboratory_id/',get_patientdetails_by_laboratory_id,name='get_patientdetails_by_laboratory_id'),
+    path('get_labdetails_by_prescription_id/',get_labdetails_by_prescription_id,name='get_labdetails_by_prescription_id'),
+    path('update_laboratory_status/',update_laboratory_status,name='update_laboratory_status'),
+    path('filter_patientdetails_oflaboratory_by_options/',filter_patientdetails_oflaboratory_by_options,name='filter_patientdetails_oflaboratory_by_options'),
+    path('get_laboratory_stats/',get_laboratory_stats,name='get_laboratory_stats'),
+
 ]
