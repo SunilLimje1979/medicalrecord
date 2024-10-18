@@ -3395,3 +3395,674 @@ def get_laboratory_stats(request):
 
     return Response(response_data, status=200)
 
+@api_view(["GET"])
+def allPharmacist(request):
+    try:
+        # Filter pharmacist where isdeleted is 0 and sort by pharmacist_id in descending order
+        pharmacists = tblPharmacist.objects.filter(is_deleted=0).order_by('-pharmacist_id')
+        if pharmacists.exists():
+            # Serialize the data
+            serializer = tblPharmacistSerializer(pharmacists, many=True)
+            pharmacist_data = serializer.data
+            
+            # Convert created_on epoch value to human-readable date format
+            for pharmacist in pharmacist_data:
+                if 'created_on' in pharmacist and pharmacist['created_on'] is not None:
+                    pharmacist['created_on_formatted'] = datetime.fromtimestamp(pharmacist['created_on']).strftime('%d-%m-%Y')
+                else:
+                    pharmacist['created_on_formatted'] = None
+            
+            # Prepare the response data
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'All Pharmacist fetched successfully.',
+                'message_data': pharmacist_data
+            }
+
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'No pharmacist data present',
+                'message_data': {}
+            }
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching Pharmacist. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(["POST"])
+def get_pharmacist_by_id(request):
+    try:
+        # Extract pharmacist_id from the request body
+        pharmacist_id = request.data.get('pharmacist_id')
+
+        if not pharmacist_id:
+            return Response({
+                'message_code': 999,
+                'message_text': 'Pharmacist ID is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        # Filter pharmacist by pharmacist_id and check if it's not deleted
+        pharmacist = tblPharmacist.objects.filter(pharmacist_id=pharmacist_id, is_deleted=0).first()
+
+        if pharmacist:
+            # Serialize the pharmacist data
+            serializer = tblPharmacistSerializer(pharmacist)
+            pharmacist_data = serializer.data
+
+            # Convert created_on epoch value to human-readable date format
+            if 'created_on' in pharmacist_data and pharmacist_data['created_on'] is not None:
+                pharmacist_data['created_on_formatted'] = datetime.fromtimestamp(pharmacist_data['created_on']).strftime('%d-%m-%Y')
+            else:
+                pharmacist_data['created_on_formatted'] = None
+
+            # Prepare the response data
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Pharmacist details fetched successfully.',
+                'message_data': pharmacist_data
+            }
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'Pharmacist not found.',
+                'message_data': {}
+            }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching pharmacist details. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def reset_pharmacist_password(request):
+    try:
+        # Extract pharmacist_id and new_password from the request body
+        pharmacist_id = request.data.get('pharmacist_id')
+        new_password = request.data.get('new_password')
+
+        if not pharmacist_id:
+            return Response({
+                'message_code': 999,
+                'message_text': 'Pharmacist ID is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        if not new_password:
+            return Response({
+                'message_code': 999,
+                'message_text': 'New password is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        # Find the pharmacist by pharmacist_id and ensure it is not deleted
+        pharmacist = tblPharmacist.objects.filter(pharmacist_id=pharmacist_id, is_deleted=0).first()
+
+        if pharmacist:
+            # Update the pharmacist password (you can hash it here if needed)
+            pharmacist.pharmacist_password = new_password
+            pharmacist.save()
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Pharmacist password reset successfully.',
+                'message_data': {}
+            }
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'Pharmacist not found.',
+                'message_data': {}
+            }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error resetting pharmacist password. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+########## Laboratory api for admin panel 
+
+@api_view(["GET"])
+def allLaboratory(request):
+    try:
+        # Filter pharmacist where isdeleted is 0 and sort by pharmacist_id in descending order
+        labs = tblLaboratory.objects.filter(is_deleted=0).order_by('-laboratory_id')
+        if labs.exists():
+            # Serialize the data
+            serializer = tblLaboratorySerializer(labs, many=True)
+            laboratory_data = serializer.data
+            
+            # Convert created_on epoch value to human-readable date format
+            for laboratory in laboratory_data:
+                if 'created_on' in laboratory and laboratory['created_on'] is not None:
+                    laboratory['created_on_formatted'] = datetime.fromtimestamp(laboratory['created_on']).strftime('%d-%m-%Y')
+                else:
+                    laboratory['created_on_formatted'] = None
+            
+            # Prepare the response data
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'All Laboratory fetched successfully.',
+                'message_data': laboratory_data
+            }
+
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'No Laboratory data present',
+                'message_data': {}
+            }
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching Laboratory. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+
+@api_view(["POST"])
+def get_laboratory_by_id(request):
+    try:
+        # Extract pharmacist_id from the request body
+        laboratory_id = request.data.get('laboratory_id')
+
+        if not laboratory_id:
+            return Response({
+                'message_code': 999,
+                'message_text': 'Laboratory ID is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        # Filter pharmacist by pharmacist_id and check if it's not deleted
+        laboratory = tblLaboratory.objects.filter(laboratory_id=laboratory_id, is_deleted=0).first()
+
+        if laboratory:
+            # Serialize the pharmacist data
+            serializer = tblLaboratorySerializer(laboratory)
+            laboratory_data = serializer.data
+
+            # Convert created_on epoch value to human-readable date format
+            if 'created_on' in laboratory_data and laboratory_data['created_on'] is not None:
+                laboratory_data['created_on_formatted'] = datetime.fromtimestamp(laboratory_data['created_on']).strftime('%d-%m-%Y')
+            else:
+                laboratory_data['created_on_formatted'] = None
+
+            # Prepare the response data
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Laboratory details fetched successfully.',
+                'message_data': laboratory_data
+            }
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'Laboratory not found.',
+                'message_data': {}
+            }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching Laboratory details. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def reset_laboratory_password(request):
+    try:
+        # Extract pharmacist_id and new_password from the request body
+        laboratory_id = request.data.get('laboratory_id')
+        new_password = request.data.get('new_password')
+
+        if not laboratory_id:
+            return Response({
+                'message_code': 999,
+                'message_text': 'Laboratory ID is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        if not new_password:
+            return Response({
+                'message_code': 999,
+                'message_text': 'New password is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        # Find the laboratory by laboratory_id and ensure it is not deleted
+        laboratory = tblLaboratory.objects.filter(laboratory_id=laboratory_id, is_deleted=0).first()
+
+        if laboratory:
+            # Update the laboratory password (you can hash it here if needed)
+            laboratory.laboratory_password = new_password
+            laboratory.save()
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Laboratory password reset successfully.',
+                'message_data': {}
+            }
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'Laboratory not found.',
+                'message_data': {}
+            }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error resetting laboratory password. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+##############fitler api for pharmacist and laboratory
+
+# @api_view(['POST'])
+# def fillter_pharmacists(request):
+#     try:
+#         city_id = request.data.get('city_id', None)
+#         start_date = request.data.get('start_date', None)
+#         end_date = request.data.get('end_date', None)
+
+#         # Convert dates from string to datetime objects
+#         if start_date:
+#             start_date = datetime.strptime(start_date, '%Y-%m-%d')
+#         if end_date:
+#             end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+#         # Filter doctors where isdeleted is 0
+#         pharmacists = tblPharmacist.objects.filter(is_deleted=0)
+
+#         if city_id:
+#             pharmacists = pharmacists.filter(shop_address=city_id)
+        
+#         if start_date and end_date:
+#             start_timestamp = int(start_date.timestamp())
+#             end_timestamp = int((end_date + timedelta(days=1)).timestamp()) - 1
+#             pharmacists = pharmacists.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+#         elif start_date:
+#             start_timestamp = int(start_date.timestamp())
+#             end_timestamp = int((start_date + timedelta(days=1)).timestamp()) - 1
+#             pharmacists = pharmacists.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+
+#         # Check if doctors are found
+#         if not pharmacists.exists():
+#             response_data = {
+#                 'message_code': 1001,
+#                 'message_text': 'No Pharmacists found for the given filters.',
+#                 'message_data': []
+#             }
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Serialize the data
+#         serializer = tblPharmacistSerializer(pharmacists, many=True)
+#         pharmacists_data = serializer.data
+
+#         # Convert created_on epoch value to human-readable date format
+#         for pharmacist in pharmacists_data:
+#             if 'created_on' in pharmacist and pharmacist['created_on'] is not None:
+#                 pharmacist['created_on_formatted'] = datetime.fromtimestamp(pharmacist['created_on']).strftime('%d-%m-%Y')
+#             else:
+#                 pharmacist['created_on_formatted'] = None
+
+#         # Prepare the response data
+#         response_data = {
+#             'message_code': 1000,
+#             'message_text': 'Pharmacists fetched successfully.',
+#             'message_data': pharmacists_data
+#         }
+#     except Exception as e:
+#         response_data = {
+#             'message_code': 999,
+#             'message_text': f'Error fetching pharmacists. Error: {str(e)}',
+#             'message_data': {}
+#         }
+
+#     return Response(response_data, status=status.HTTP_200_OK)
+@api_view(['POST'])
+def fillter_pharmacists(request):
+    try:
+        city_id = request.data.get('city_id', None)
+        start_date = request.data.get('start_date', None)
+        end_date = request.data.get('end_date', None)
+        doctor_name = request.data.get('doctor_name', None)  # New input
+
+        # Convert dates from string to datetime objects
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        if end_date:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        # Filter laboratories where is_deleted is 0
+        pharmacists = tblPharmacist.objects.filter(is_deleted=0)
+
+        # Filter by city_id if provided
+        if city_id:
+            pharmacists = pharmacists.filter(shop_address=city_id)
+
+        # Filter by start_date and end_date if provided
+        if start_date and end_date:
+            start_timestamp = int(start_date.timestamp())
+            end_timestamp = int((end_date + timedelta(days=1)).timestamp()) - 1
+            pharmacists = pharmacists.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+        elif start_date:
+            start_timestamp = int(start_date.timestamp())
+            end_timestamp = int((start_date + timedelta(days=1)).timestamp()) - 1
+            pharmacists = pharmacists.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+
+        # If doctor_name is provided, filter labs by doctor-laboratory association
+        if doctor_name:
+            # Split the doctor name into words to handle both first and last names
+            doctor_name_parts = doctor_name.strip().split()
+
+            # Build the query for doctor name search
+            doctor_filter = Q()
+            if len(doctor_name_parts) == 1:
+                # If only one name is provided, search in both first name and last name
+                doctor_filter = Q(doctor_firstname__icontains=doctor_name_parts[0]) | Q(doctor_lastname__icontains=doctor_name_parts[0])
+            elif len(doctor_name_parts) >= 2:
+                # If both first and last name are provided
+                doctor_filter = Q(doctor_firstname__icontains=doctor_name_parts[0], doctor_lastname__icontains=doctor_name_parts[1])
+
+            # Search for the doctor by first name or last name
+            doctor = Tbldoctors.objects.filter(doctor_filter, isdeleted=0, isactive=1).first()
+
+            # If doctor exists, filter labs through tblDoctorPharmacistlink
+            if doctor:
+                linked_pharmacists_ids = tblDoctorPharmacistlink.objects.filter(
+                    doctor_id=doctor.doctor_id,
+                    is_deleted=0,
+                    status=0  # Assuming status 0 means currently associated
+                ).values_list('pharmacist_id', flat=True)
+
+                pharmacists = pharmacists.filter(pharmacist_id__in=linked_pharmacists_ids)
+            else:
+                response_data = {
+                    'message_code': 1002,
+                    'message_text': 'Doctor not found with the provided name.',
+                    'message_data': []
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+
+        # Check if any laboratories are found after filtering
+        if not pharmacists.exists():
+            response_data = {
+                'message_code': 1001,
+                'message_text': 'No Pharmacists found for the given filters.',
+                'message_data': []
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize the data
+        serializer = tblPharmacistSerializer(pharmacists, many=True)
+        pharmacists_data = serializer.data
+
+        # Convert created_on epoch value to human-readable date format
+        for pharmacist in pharmacists_data:
+            if 'created_on' in pharmacist and pharmacist['created_on'] is not None:
+                pharmacist['created_on_formatted'] = datetime.fromtimestamp(pharmacist['created_on']).strftime('%d-%m-%Y')
+            else:
+                pharmacist['created_on_formatted'] = None
+
+        # Prepare the response data
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Pharmacists fetched successfully.',
+            'message_data': pharmacists_data
+        }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching pharmacist. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+
+# @api_view(['POST'])
+# def fillter_laboratories(request):
+#     try:
+#         city_id = request.data.get('city_id', None)
+#         start_date = request.data.get('start_date', None)
+#         end_date = request.data.get('end_date', None)
+
+#         # Convert dates from string to datetime objects
+#         if start_date:
+#             start_date = datetime.strptime(start_date, '%Y-%m-%d')
+#         if end_date:
+#             end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+#         # Filter doctors where isdeleted is 0
+#         labs = tblLaboratory.objects.filter(is_deleted=0)
+
+#         if city_id:
+#             labs = labs.filter(laboratory_address=city_id)
+        
+#         if start_date and end_date:
+#             start_timestamp = int(start_date.timestamp())
+#             end_timestamp = int((end_date + timedelta(days=1)).timestamp()) - 1
+#             labs = labs.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+#         elif start_date:
+#             start_timestamp = int(start_date.timestamp())
+#             end_timestamp = int((start_date + timedelta(days=1)).timestamp()) - 1
+#             labs = labs.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+
+#         # Check if doctors are found
+#         if not labs.exists():
+#             response_data = {
+#                 'message_code': 1001,
+#                 'message_text': 'No Laboratories found for the given filters.',
+#                 'message_data': []
+#             }
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Serialize the data
+#         serializer = tblLaboratorySerializer(labs, many=True)
+#         labs_data = serializer.data
+
+#         # Convert created_on epoch value to human-readable date format
+#         for laboratory in labs_data:
+#             if 'created_on' in laboratory and laboratory['created_on'] is not None:
+#                 laboratory['created_on_formatted'] = datetime.fromtimestamp(laboratory['created_on']).strftime('%d-%m-%Y')
+#             else:
+#                 laboratory['created_on_formatted'] = None
+
+#         # Prepare the response data
+#         response_data = {
+#             'message_code': 1000,
+#             'message_text': 'Laboratories fetched successfully.',
+#             'message_data': labs_data
+#         }
+#     except Exception as e:
+#         response_data = {
+#             'message_code': 999,
+#             'message_text': f'Error fetching laboratory. Error: {str(e)}',
+#             'message_data': {}
+#         }
+
+#     return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def fillter_laboratories(request):
+    try:
+        city_id = request.data.get('city_id', None)
+        start_date = request.data.get('start_date', None)
+        end_date = request.data.get('end_date', None)
+        doctor_name = request.data.get('doctor_name', None)  # New input
+
+        # Convert dates from string to datetime objects
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        if end_date:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')
+
+        # Filter laboratories where is_deleted is 0
+        labs = tblLaboratory.objects.filter(is_deleted=0)
+
+        # Filter by city_id if provided
+        if city_id:
+            labs = labs.filter(laboratory_address=city_id)
+
+        # Filter by start_date and end_date if provided
+        if start_date and end_date:
+            start_timestamp = int(start_date.timestamp())
+            end_timestamp = int((end_date + timedelta(days=1)).timestamp()) - 1
+            labs = labs.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+        elif start_date:
+            start_timestamp = int(start_date.timestamp())
+            end_timestamp = int((start_date + timedelta(days=1)).timestamp()) - 1
+            labs = labs.filter(created_on__gte=start_timestamp, created_on__lte=end_timestamp)
+
+        # If doctor_name is provided, filter labs by doctor-laboratory association
+        if doctor_name:
+            # Split the doctor name into words to handle both first and last names
+            doctor_name_parts = doctor_name.strip().split()
+
+            # Build the query for doctor name search
+            doctor_filter = Q()
+            if len(doctor_name_parts) == 1:
+                # If only one name is provided, search in both first name and last name
+                doctor_filter = Q(doctor_firstname__icontains=doctor_name_parts[0]) | Q(doctor_lastname__icontains=doctor_name_parts[0])
+            elif len(doctor_name_parts) >= 2:
+                # If both first and last name are provided
+                doctor_filter = Q(doctor_firstname__icontains=doctor_name_parts[0], doctor_lastname__icontains=doctor_name_parts[1])
+
+            # Search for the doctor by first name or last name
+            doctor = Tbldoctors.objects.filter(doctor_filter, isdeleted=0, isactive=1).first()
+
+            # If doctor exists, filter labs through tblDoctorLaboratorylink
+            if doctor:
+                linked_labs_ids = tblDoctorLaboratorylink.objects.filter(
+                    doctor_id=doctor.doctor_id,
+                    is_deleted=0,
+                    status=0  # Assuming status 0 means currently associated
+                ).values_list('laboratory_id', flat=True)
+
+                labs = labs.filter(laboratory_id__in=linked_labs_ids)
+            else:
+                response_data = {
+                    'message_code': 1002,
+                    'message_text': 'Doctor not found with the provided name.',
+                    'message_data': []
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+
+        # Check if any laboratories are found after filtering
+        if not labs.exists():
+            response_data = {
+                'message_code': 1001,
+                'message_text': 'No Laboratories found for the given filters.',
+                'message_data': []
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize the data
+        serializer = tblLaboratorySerializer(labs, many=True)
+        labs_data = serializer.data
+
+        # Convert created_on epoch value to human-readable date format
+        for laboratory in labs_data:
+            if 'created_on' in laboratory and laboratory['created_on'] is not None:
+                laboratory['created_on_formatted'] = datetime.fromtimestamp(laboratory['created_on']).strftime('%d-%m-%Y')
+            else:
+                laboratory['created_on_formatted'] = None
+
+        # Prepare the response data
+        response_data = {
+            'message_code': 1000,
+            'message_text': 'Laboratories fetched successfully.',
+            'message_data': labs_data
+        }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error fetching laboratory. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+#####################Api to reset doctor's Password
+
+@api_view(["POST"])
+def reset_doctor_password(request):
+    try:
+        # Extract pharmacist_id and new_password from the request body
+        doctor_id = request.data.get('doctor_id')
+        new_password = request.data.get('new_password')
+
+        if not doctor_id:
+            return Response({
+                'message_code': 999,
+                'message_text': 'Doctor ID is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        if not new_password:
+            return Response({
+                'message_code': 999,
+                'message_text': 'New password is required.',
+                'message_data': {}
+            }, status=status.HTTP_200_OK)
+
+        # Find the laboratory by laboratory_id and ensure it is not deleted
+        doctor = Tbldoctors.objects.filter(doctor_id=doctor_id, isdeleted=0).first()
+
+        if doctor:
+            # Update the laboratory password (you can hash it here if needed)
+            doctor.password = new_password
+            doctor.save()
+
+            response_data = {
+                'message_code': 1000,
+                'message_text': 'Doctor password reset successfully.',
+                'message_data': {}
+            }
+        else:
+            response_data = {
+                'message_code': 999,
+                'message_text': 'Doctor not found.',
+                'message_data': {}
+            }
+
+    except Exception as e:
+        response_data = {
+            'message_code': 999,
+            'message_text': f'Error resetting doctor password. Error: {str(e)}',
+            'message_data': {}
+        }
+
+    return Response(response_data, status=status.HTTP_200_OK)

@@ -76,6 +76,11 @@ urlpatterns = [
     path('update_pharma_status/',update_pharma_status,name='update_pharma_status'),
     path('filter_patientdetails_by_options/',filter_patientdetails_by_options,name='filter_patientdetails_by_options'),
     path('get_pharmacist_stats/',get_pharmacist_stats,name='get_pharmacist_stats'),
+    path('allPharmacist/',allPharmacist,name='allPharmacist'),
+    path('get_pharmacist_by_id/',get_pharmacist_by_id,name='get_pharmacist_by_id'),
+    path('reset_pharmacist_password/',reset_pharmacist_password,name='reset_pharmacist_password'),
+    path('fillter_pharmacists/',fillter_pharmacists,name='fillter_pharmacists'),
+
 
 
     path('insert_laboratory/',insert_laboratory,name='insert_laboratory'),
@@ -93,5 +98,12 @@ urlpatterns = [
     path('update_laboratory_status/',update_laboratory_status,name='update_laboratory_status'),
     path('filter_patientdetails_oflaboratory_by_options/',filter_patientdetails_oflaboratory_by_options,name='filter_patientdetails_oflaboratory_by_options'),
     path('get_laboratory_stats/',get_laboratory_stats,name='get_laboratory_stats'),
+    path('allLaboratory/',allLaboratory,name='allLaboratory'),
+    path('get_laboratory_by_id/',get_laboratory_by_id,name='get_laboratory_by_id'),
+    path('reset_laboratory_password/',reset_laboratory_password,name='reset_laboratory_password'),
+    path('fillter_laboratories/',fillter_laboratories,name='fillter_laboratories'),
+
+    path('reset_doctor_password/',reset_doctor_password,name='reset_doctor_password'),
+
 
 ]
