@@ -1195,7 +1195,8 @@ def get_labinvestigation_bydoctorid(request):
 
     if doctor_id is not None:
         try:
-            lab_investigation = Tbllabinvestigations.objects.filter(doctor_id=doctor_id,isdeleted=0)
+            # lab_investigation = Tbllabinvestigations.objects.filter(doctor_id=doctor_id,isdeleted=0)
+            lab_investigation = Tbllabinvestigations.objects.filter((Q(doctor_id=doctor_id) | Q(doctor_id__isnull=True)) & Q(isdeleted=0))
             serializer = TbllabinvestigationsSerializer(lab_investigation, many=True)
             result = serializer.data
 
