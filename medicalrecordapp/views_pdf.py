@@ -1146,14 +1146,27 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     ])
     table = Table(table_data, style=table_style, colWidths=[150,150])
     flowables.extend([table])
-    medilineapp = "this facility powered by av mediline app"
+    medilineapp = "this facility powered by Durgsampada Digital Media Pvt. Ltd."
+    mediline_style = ParagraphStyle(
+        'MedilineText',
+        parent=styles['Heading1'],
+        alignment=1,  # Center align
+        fontSize=16,  # Adjust font size to fit in a single line
+    )
     table_data = [
-        [ Paragraph(medilineapp, center_style)],
+        [ Paragraph(medilineapp, mediline_style)],
     ]
+    # table_style = TableStyle([
+    #     ('VALIGN', (0, 0), (-1, -1), 'LEFT'),  # Vertical alignment in the middle
+    #     ('ALIGN', (0, 0), (0, 0), 'CENTER'), # Alignment of the content to the left
+    #     ('GRID', (0, 0), (-1, -1), 1, colors.white),  # Add grid lines
+    # ])
     table_style = TableStyle([
-        ('VALIGN', (0, 0), (-1, -1), 'LEFT'),  # Vertical alignment in the middle
-        ('ALIGN', (0, 0), (0, 0), 'CENTER'), # Alignment of the content to the left
-        ('GRID', (0, 0), (-1, -1), 1, colors.white),  # Add grid lines
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Center alignment
+        ('LEFTPADDING', (0, 0), (-1, -1), 2),  # Reduce left padding
+        ('RIGHTPADDING', (0, 0), (-1, -1), 2),  # Reduce right padding
+        ('TOPPADDING', (0, 0), (-1, -1), 2),  # Reduce top padding
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),  # Reduce bottom padding
     ])
     table = Table(table_data, style=table_style, colWidths=[500])
     flowables.extend([table])
