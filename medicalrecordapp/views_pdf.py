@@ -299,16 +299,18 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                     # Replace '/staticfiles/' with '/static/'
                     updated_link = link.replace('/staticfiles/', '/static/')
                     img_path="https://mahi-durg.app/doctor"+updated_link
+                    local_img_path = fetch_and_save_image(img_path)
                     header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
                     header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
-                    img = Image(img_path, width=600, height=header_top_margin_in_pixels)
+                    img = Image(local_img_path, width=600, height=header_top_margin_in_pixels)
                 else:
                     link="/staticfiles/media/header_images/Default.jpg"
                     updated_link = link.replace('/staticfiles/', '/static/')
                     img_path="https://mahi-durg.app/doctor"+updated_link
+                    local_img_path = fetch_and_save_image(img_path)
                     header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
                     header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
-                    img = Image(img_path, width=600, height=header_top_margin_in_pixels)
+                    img = Image(local_img_path, width=600, height=header_top_margin_in_pixels)
 
             elif(prescription_settings['header_type']==1):
                 options=['clinic_name','clinic_address','doctor_name','doctor_degree','doctor_speciality','doctor_availability','clinic_services','clinic_logo','clinic_mobile_number']
@@ -486,8 +488,9 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                     # Replace '/staticfiles/' with '/static/'
                     updated_link = link.replace('/staticfiles/', '/static/')
                     img_path="https://mahi-durg.app/doctor"+updated_link
+                    local_img_path = fetch_and_save_image(img_path)
                     #img = Image(img_path, width=100, height=100)
-                    img_table = create_aligned_image_table(img_path,prescription_settings['clinic_logo_alignment'], width=50, height=50)  # Change 'center' to 'left' or 'right' based on your input
+                    img_table = create_aligned_image_table(local_img_path,prescription_settings['clinic_logo_alignment'], width=50, height=50)  # Change 'center' to 'left' or 'right' based on your input
                     flowables = [img_table,table, hr_line]
                 else:
                     heading = Paragraph(heading_text, center_style)
