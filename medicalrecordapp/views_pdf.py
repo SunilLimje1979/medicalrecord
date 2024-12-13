@@ -956,7 +956,8 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
         # Replace '/staticfiles/' with '/static/'
         updated_link = link.replace('/staticfiles/', '/static/')
         img_path="https://mahi-durg.app/doctor"+updated_link
-        img_path = get_image_with_ssl(img_path)
+        local_img_path = fetch_and_save_image(img_path)
+
     else:
         location_title = ""
 
@@ -996,7 +997,7 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     styles = getSampleStyleSheet()
     content_style = ParagraphStyle(name='Content', fontSize=25, leading=14,topMargin=0)
     # Create image
-    img = Image(img_path, width=100, height=100)
+    img = Image(local_img_path, width=100, height=100)
     data = [[img,Paragraph(content_text, content_style), Paragraph(marathi_translation, hindi_style)],
              [Paragraph("", content_style), Paragraph(doctor_address, content_style_eng),Paragraph(doctor_address_marathi, hindi_style_address)],
             ]
@@ -1179,22 +1180,35 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
 from reportlab.platypus import Image
 from io import BytesIO
 
-def get_image_with_ssl(url):
+def fetch_and_save_image(url):
     """
     Fetch the image from the URL while ignoring SSL certificate validation.
-    Returns a ReportLab-compatible Image object.
+    Save it as a temporary file, ensuring only one file exists at a time.
     """
     try:
+        # Create a temporary directory
+        temp_dir = os.path.join(settings.BASE_DIR, 'temp_images')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Clear the directory before saving a new image
+        for file in os.listdir(temp_dir):
+            file_path = os.path.join(temp_dir, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
+        # Fetch the image
         response = requests.get(url, verify=False)  # Ignore SSL verification
         response.raise_for_status()
-        # Load image into BytesIO and create a ReportLab Image object
-        img_data = BytesIO(response.content)
-        return Image(img_data, width=100, height=100)  # Adjust size as needed
+
+        # Save the new image
+        temp_file_path = os.path.join(temp_dir, os.path.basename(url))
+        with open(temp_file_path, 'wb') as temp_file:
+            temp_file.write(response.content)
+
+        return temp_file_path
     except requests.exceptions.RequestException as e:
         print(f"Error fetching image: {e}")
         return None
-
-
 
 
 # def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms):
