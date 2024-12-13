@@ -119,11 +119,11 @@ def fi_generateprescriptionpdf(request):
         try:
             
             # Fetch get_consultation_byconsultationid data using Django ORM
-            url_doctor_consultation =  'http://13.233.211.102/medicalrecord/api/get_consultation_byconsultationid/' #'http://localhost:8000/medicalrecord/api/get_consultation_byconsultationid/'
+            url_doctor_consultation =  'https://mahi-durg.app/medicalrecord/api/get_consultation_byconsultationid/' #'http://localhost:8000/medicalrecord/api/get_consultation_byconsultationid/'
             json_data_consultation = {"consultation_id":consultation_id}
 
             try:
-                response_consultation = requests.post(url_doctor_consultation, json=json_data_consultation)
+                response_consultation = requests.post(url_doctor_consultation, json=json_data_consultation,verify=False)
                 response_consultation.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
 
                 json_data_consultation= response_consultation.json()
@@ -138,10 +138,10 @@ def fi_generateprescriptionpdf(request):
                 doctor_id =""
             # Fetch doctor data using Django ORM
             if doctor_id:
-                url_doctor = 'http://13.233.211.102/doctor/api/get_doctor_by_id/'
+                url_doctor = 'https://mahi-durg.app/doctor/api/get_doctor_by_id/'
                 json_data_doctor = {"doctor_id": doctor_id}
                 
-                response_doctor = requests.post(url_doctor, json=json_data_doctor)
+                response_doctor = requests.post(url_doctor, json=json_data_doctor,verify=False)
 
                 if response_doctor.status_code == 200:
                     json_data_doctor = response_doctor.json()
@@ -159,11 +159,11 @@ def fi_generateprescriptionpdf(request):
             
             if patient_id:
                 # Fetch patient data using Django ORM
-                url_patient = 'http://13.233.211.102/pateint/api/get_patient_byid/'
+                url_patient = 'https://mahi-durg.app/pateint/api/get_patient_byid/'
                 json_data_patient = {"patient_id": patient_id}
 
                 try:
-                    response_patient = requests.post(url_patient, json=json_data_patient)
+                    response_patient = requests.post(url_patient, json=json_data_patient,verify=False)
                     response_patient.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
 
                     json_data_patient = response_patient.json()
@@ -257,7 +257,7 @@ def fi_generateprescriptionpdf(request):
 
                 # Convert the path to a string without hyperlink
                 final_path = str(absolute_file_path.replace('\\', '/'))
-                url_prefix = "http://13.233.211.102/medicalrecord/static/"
+                url_prefix = "https://mahi-durg.app/medicalrecord/static/"
                 url = final_path.replace("/home/ubuntu/medicalrecord/staticfiles/", url_prefix)
                 res = {
                     'message_code': 1000,
@@ -283,8 +283,8 @@ def fi_generateprescriptionpdf(request):
 
 def generate_pdf(result_doctor,result_patient,result_doctor_location,result_patientvitals,result_doctor_location_availability,result_patient_medications,result_consultation,result_findings_symptoms):
     print(result_doctor)
-    detail_url="http://13.233.211.102/doctor/api/get_prescription_settings_by_doctor/"
-    detail_response=requests.post(detail_url,json={'doctor_id':result_doctor[0].get('doctor_id')})
+    detail_url="https://mahi-durg.app/doctor/api/get_prescription_settings_by_doctor/"
+    detail_response=requests.post(detail_url,json={'doctor_id':result_doctor[0].get('doctor_id')},verify=False)
     print(detail_response.text)
     pagesize = A4
     if(detail_response.json().get('message_code')==1000):
@@ -298,14 +298,14 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                 if(link is not None):
                     # Replace '/staticfiles/' with '/static/'
                     updated_link = link.replace('/staticfiles/', '/static/')
-                    img_path="http://13.233.211.102/doctor"+updated_link
+                    img_path="https://mahi-durg.app/doctor"+updated_link
                     header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
                     header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
                     img = Image(img_path, width=600, height=header_top_margin_in_pixels)
                 else:
                     link="/staticfiles/media/header_images/Default.jpg"
                     updated_link = link.replace('/staticfiles/', '/static/')
-                    img_path="http://13.233.211.102/doctor"+updated_link
+                    img_path="https://mahi-durg.app/doctor"+updated_link
                     header_top_margin_in_inches = (float(prescription_settings['header_top_margin']) if prescription_settings['header_top_margin'] else 0)
                     header_top_margin_in_pixels = header_top_margin_in_inches * 72 if header_top_margin_in_inches else 100
                     img = Image(img_path, width=600, height=header_top_margin_in_pixels)
@@ -476,8 +476,8 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                 table = Table(table_data, style=table_style, colWidths=[415, 165])
                 hr_line = HRFlowable(width="100%", color=colors.black, thickness=2,spaceBefore=2, spaceAfter=2)
                 if('clinic_logo' in checked_options):
-                    api_url="http://13.233.211.102/doctor/api/get_all_doctor_location/"
-                    response=requests.post(api_url,json={"doctor_location_id":result_doctor_location.get('doctor_location_id')})
+                    api_url="https://mahi-durg.app/doctor/api/get_all_doctor_location/"
+                    response=requests.post(api_url,json={"doctor_location_id":result_doctor_location.get('doctor_location_id')},verify=False)
                     data=response.json().get("message_data",{})
                     # print(data)
                     link=(data[0]).get('location_image')
@@ -485,7 +485,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                         link="/staticfiles/media/location_images/cliniclogo2.jpg"
                     # Replace '/staticfiles/' with '/static/'
                     updated_link = link.replace('/staticfiles/', '/static/')
-                    img_path="http://13.233.211.102/doctor"+updated_link
+                    img_path="https://mahi-durg.app/doctor"+updated_link
                     #img = Image(img_path, width=100, height=100)
                     img_table = create_aligned_image_table(img_path,prescription_settings['clinic_logo_alignment'], width=50, height=50)  # Change 'center' to 'left' or 'right' based on your input
                     flowables = [img_table,table, hr_line]
@@ -804,11 +804,11 @@ def fi_generateclinicpdf(request):
     else:
         try:
             # Fetch clinick name data using Django ORM
-            url_doctor_location = 'http://13.233.211.102/doctor/api/get_all_doctor_location/'
+            url_doctor_location = 'https://mahi-durg.app/doctor/api/get_all_doctor_location/'
             json_data_doctor_location = {"doctor_location_id": doctor_location_id}
 
             try:
-                response_doctor_location = requests.post(url_doctor_location, json=json_data_doctor_location)
+                response_doctor_location = requests.post(url_doctor_location, json=json_data_doctor_location,verify=False)
                 response_doctor_location.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
 
                 json_data_doctor_location = response_doctor_location.json()
@@ -824,10 +824,10 @@ def fi_generateclinicpdf(request):
             
             if doctor_id:
                 # Fetch doctor data using Django ORM
-                url_doctor = 'http://13.233.211.102/doctor/api/get_doctor_by_id/'
+                url_doctor = 'https://mahi-durg.app/doctor/api/get_doctor_by_id/'
                 json_data_doctor = {"doctor_id": doctor_id}
                 
-                response_doctor = requests.post(url_doctor, json=json_data_doctor)
+                response_doctor = requests.post(url_doctor, json=json_data_doctor,verify=False)
 
                 if response_doctor.status_code == 200:
                     json_data_doctor = response_doctor.json()
@@ -867,7 +867,7 @@ def fi_generateclinicpdf(request):
                 # Convert the path to a string without hyperlink
                 final_path = str(absolute_file_path.replace('\\', '/'))
                 
-                url_prefix = "http://13.233.211.102/medicalrecord/static/"
+                url_prefix = "https://mahi-durg.app/medicalrecord/static/"
                 url = final_path.replace("/home/ubuntu/medicalrecord/staticfiles/", url_prefix)
                 res = {
                     'message_code': 1000,
@@ -955,7 +955,7 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
             link="/staticfiles/media/location_images/cliniclogo2.jpg"
         # Replace '/staticfiles/' with '/static/'
         updated_link = link.replace('/staticfiles/', '/static/')
-        img_path="http://13.233.211.102/doctor"+updated_link
+        img_path="https://mahi-durg.app/doctor"+updated_link
     else:
         location_title = ""
 
