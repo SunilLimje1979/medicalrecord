@@ -956,6 +956,7 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
         # Replace '/staticfiles/' with '/static/'
         updated_link = link.replace('/staticfiles/', '/static/')
         img_path="https://mahi-durg.app/doctor"+updated_link
+        img_path = get_image_with_ssl(img_path)
     else:
         location_title = ""
 
@@ -1174,6 +1175,24 @@ def generate_clinic_pdf(result_doctor_location,result_doctor,result_doctor_locat
     my_doc.build(flowables)
     return pdf_buffer
 
+
+from reportlab.platypus import Image
+from io import BytesIO
+
+def get_image_with_ssl(url):
+    """
+    Fetch the image from the URL while ignoring SSL certificate validation.
+    Returns a ReportLab-compatible Image object.
+    """
+    try:
+        response = requests.get(url, verify=False)  # Ignore SSL verification
+        response.raise_for_status()
+        # Load image into BytesIO and create a ReportLab Image object
+        img_data = BytesIO(response.content)
+        return Image(img_data, width=100, height=100)  # Adjust size as needed
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching image: {e}")
+        return None
 
 
 
