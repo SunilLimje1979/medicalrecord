@@ -105,5 +105,17 @@ urlpatterns = [
 
     path('reset_doctor_password/',reset_doctor_password,name='reset_doctor_password'),
 
+    path('insert_daycare_medication/',insert_daycare_medication,name='insert_daycare_medication'),
+    path('update_daycare_medication/',update_daycare_medication,name='update_daycare_medication'),
+    path('get_daycare_medication_details/',get_daycare_medication_details,name='get_daycare_medication_details'),
+    path('delete_daycare_medication/',delete_daycare_medication,name='delete_daycare_medication'),
+
+    path('insert_bill_header/',insert_bill_header,name='insert_bill_header'),
+    path('update_bill_header/',update_bill_header,name='update_bill_header'),
+    path('get_bill_header_details/',get_bill_header_details,name='get_bill_header_details'),
+    path('get_active_bills/',get_active_bills,name='get_active_bills'),
+    
+    path('update_patient_charges/',update_patient_charges,name='update_patient_charges'),
+    
 
 ]

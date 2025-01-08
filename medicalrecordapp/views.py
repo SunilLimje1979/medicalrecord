@@ -4067,3 +4067,622 @@ def reset_doctor_password(request):
         }
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+
+#####################DaycareMedication
+@api_view(["POST"])
+def insert_daycare_medication(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract required fields from request
+        doctor_id = request.data.get('doctor_id')
+        location_id = request.data.get('location_id')
+        patient_id = request.data.get('patient_id')
+        consultation_id = request.data.get('consultation_id')
+        prescription_id = request.data.get('prescription_id')
+        medication_datetime = request.data.get('medication_datetime')
+        medicine_name = request.data.get('medicine_name')
+
+        # Validate required fields
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not patient_id:
+            response_data['message_text'] = 'Patient ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not prescription_id:
+            response_data['message_text'] = 'Prescription ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not medication_datetime:
+            response_data['message_text'] = 'Medication DateTime is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not medicine_name:
+            response_data['message_text'] = 'Medicine Name is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Prepare data for serializer
+        medication_data = request.data.copy()
+
+        # Ensure correct datetime format
+        try:
+            medication_data['medication_datetime'] = datetime.strptime(medication_datetime, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            response_data['message_text'] = "Invalid date format. Use 'YYYY-MM-DD HH:MM:SS'."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize and save data
+        serializer = TblDayCareMedicationSerializer(data=medication_data)
+
+        if serializer.is_valid():
+            serializer.save()
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Daycare medication inserted successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def update_daycare_medication(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract required field for identifying the record
+        daycare_medication_id = request.data.get('DaycareMedication_id')
+
+        if not daycare_medication_id:
+            response_data['message_text'] = 'DaycareMedication ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the record to update
+        daycare_medication = TblDayCareMedication.objects.filter(
+            DaycareMedication_id=daycare_medication_id, is_deleted=0
+        ).first()
+
+        if not daycare_medication:
+            response_data['message_text'] = 'DaycareMedication record not found.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Update fields dynamically from the request data
+        update_data = request.data.copy()
+
+        # Ensure correct datetime format for `medication_datetime`
+        medication_datetime = update_data.get('medication_datetime')
+        if medication_datetime:
+            try:
+                update_data['medication_datetime'] = datetime.strptime(medication_datetime, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                response_data['message_text'] = "Invalid date format for 'medication_datetime'. Use 'YYYY-MM-DD HH:MM:SS'."
+                return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize the updated data
+        serializer = TblDayCareMedicationSerializer(daycare_medication, data=update_data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Daycare medication updated successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_daycare_medication_details(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract parameters from request
+        daycare_medication_id = request.data.get('DaycareMedication_id', None)
+        consultation_id = request.data.get('consultation_id', None)
+        prescription_id = request.data.get('prescription_id', None)
+
+        # Check if at least one parameter is provided
+        if not any([daycare_medication_id, consultation_id, prescription_id]):
+            response_data['message_text'] = "At least one of 'DaycareMedication_id', 'consultation_id', or 'prescription_id' is required."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Filter based on parameters and is_deleted=0
+        filters = {'is_deleted': 0}
+        if daycare_medication_id:
+            filters['DaycareMedication_id'] = daycare_medication_id
+        if consultation_id:
+            filters['consultation_id'] = consultation_id
+        if prescription_id:
+            filters['prescription_id'] = prescription_id
+
+        # Fetch matching records
+        records = TblDayCareMedication.objects.filter(**filters)
+
+        # Check if records exist
+        if not records.exists():
+            response_data['message_text'] = "No records found for the provided parameters."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize and return the records
+        serializer = TblDayCareMedicationSerializer(records, many=True)
+        response_data['message_code'] = 1000
+        response_data['message_text'] = "Records fetched successfully."
+        response_data['message_data'] = serializer.data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def delete_daycare_medication(request):
+    """
+    Soft delete a DayCareMedication record by updating is_deleted to 1.
+    """
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred while deleting record.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract DaycareMedication_id from request
+        daycare_medication_id = request.data.get('DaycareMedication_id')
+
+        # Validate if DaycareMedication_id is provided
+        if not daycare_medication_id:
+            response_data['message_text'] = "'DaycareMedication_id' is required."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the record with the given ID and ensure is_deleted=0
+        record = TblDayCareMedication.objects.filter(DaycareMedication_id=daycare_medication_id, is_deleted=0).first()
+
+        # Check if the record exists
+        if not record:
+            response_data['message_text'] = "Record not found or already deleted."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Perform soft delete by updating is_deleted field
+        record.is_deleted = 1
+        record.deleted_on = timezone.now()  # Record the deletion timestamp
+        record.save()
+
+        response_data['message_code'] = 1000
+        response_data['message_text'] = "Record deleted successfully."
+        response_data['message_data'] = {"DaycareMedication_id": daycare_medication_id}
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+##########BillHeader
+@api_view(["POST"])
+def insert_bill_header(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract required fields from request
+        doctor_id = request.data.get('doctor_id')
+        location_id = request.data.get('location_id')
+        patient_id = request.data.get('patient_id')
+        consultation_id = request.data.get('consultation_id')
+        total_bill_amount = request.data.get('total_bill_amount')
+        bill_type = request.data.get('bill_type')
+
+        # Validate required fields
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not location_id:
+            response_data['message_text'] = 'Location ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not patient_id:
+            response_data['message_text'] = 'Patient ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not consultation_id:
+            response_data['message_text'] = 'Consultation ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not total_bill_amount:
+            response_data['message_text'] = 'Total Bill Amount is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not bill_type:
+            response_data['message_text'] = 'Bill Type is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Prepare data for serializer
+        bill_data = request.data.copy()
+
+        # Handle optional `billpaid_datetime`
+        billpaid_datetime = request.data.get('billpaid_datetime')
+        if billpaid_datetime:
+            try:
+                bill_data['billpaid_datetime'] = datetime.strptime(billpaid_datetime, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                response_data['message_text'] = "Invalid date format for billpaid_datetime. Use 'YYYY-MM-DD HH:MM:SS'."
+                return Response(response_data, status=status.HTTP_200_OK)
+            
+            
+        # Serialize and save data
+        serializer = TblBillHeaderSerializer(data=bill_data)
+
+        if serializer.is_valid():
+            serializer.save()
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Bill header inserted successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def update_bill_header(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract identifiers from request
+        bill_header_id = request.data.get('billHeader_id')
+        consultation_id = request.data.get('consultation_id')
+        prescription_id = request.data.get('prescription_id')
+
+        # Validate at least one identifier is provided
+        if not any([bill_header_id, consultation_id, prescription_id]):
+            response_data['message_text'] = 'At least one of billHeader_id, consultation_id, or prescription_id is required.'
+            return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch the existing record based on provided identifier
+        filters = {}
+        if bill_header_id:
+            filters['billHeader_id'] = bill_header_id
+        if consultation_id:
+            filters['consultation_id'] = consultation_id
+        if prescription_id:
+            filters['prescription_id'] = prescription_id
+
+        try:
+            bill_header = TblBillHeader.objects.get(**filters)
+        except TblBillHeader.DoesNotExist:
+            response_data['message_text'] = 'Bill Header record not found.'
+            return Response(response_data, status=status.HTTP_404_NOT_FOUND)
+
+        # Update the record using serializer
+        serializer = TblBillHeaderSerializer(bill_header, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            response_data['message_code'] = 1000
+            response_data['message_text'] = 'Bill header updated successfully.'
+            response_data['message_data'] = serializer.data
+        else:
+            response_data['message_text'] = 'Invalid data provided.'
+            response_data['message_debug'] = serializer.errors
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_bill_header_details(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract parameters from request
+        billHeader_id = request.data.get('billHeader_id', None)
+        consultation_id = request.data.get('consultation_id', None)
+        prescription_id = request.data.get('prescription_id', None)
+
+        # Check if at least one parameter is provided
+        if not any([billHeader_id, consultation_id, prescription_id]):
+            response_data['message_text'] = "At least one of 'billHeader_id', 'consultation_id', or 'prescription_id' is required."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Filter based on parameters and is_deleted=0
+        filters = {'is_deleted': 0}
+        if billHeader_id:
+            filters['billHeader_id'] = billHeader_id
+        if consultation_id:
+            filters['consultation_id'] = consultation_id
+        if prescription_id:
+            filters['prescription_id'] = prescription_id
+
+        # Fetch matching records
+        records = TblBillHeader.objects.filter(**filters)
+
+        # Check if records exist
+        if not records.exists():
+            response_data['message_text'] = "No records found for the provided parameters."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize and return the records
+        serializer = TblBillHeaderSerializer(records, many=True)
+        response_data['message_code'] = 1000
+        response_data['message_text'] = "Records fetched successfully."
+        response_data['message_data'] = serializer.data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+# @api_view(["POST"])
+# def get_active_bills(request):
+#     debug = []
+#     response_data = {
+#         'message_code': 999,
+#         'message_text': 'Error occurred.',
+#         'message_data': [],
+#         'message_debug': debug
+#     }
+
+#     try:
+#         # Extract parameters from request
+#         doctor_id = request.data.get('doctor_id', None)
+#         patient_id = request.data.get('patient_id', None)
+
+#         # Validate at least one identifier is provided
+#         if not any([doctor_id, patient_id]):
+#             response_data['message_text'] = "At least one of 'doctor_id' or 'patient_id' is required."
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Base filters for active bills
+#         filters = {
+#             'is_deleted': 0,
+#             'bill_status': 0
+#         }
+
+#         if doctor_id:
+#             filters['doctor_id'] = doctor_id
+#         if patient_id:
+#             filters['patient_id'] = patient_id
+
+#         # Fetch matching records
+#         records = TblBillHeader.objects.filter(**filters).order_by('-created_on')
+
+#         # Check if records exist
+#         if not records.exists():
+#             response_data['message_text'] = "No active bills found for the provided parameters."
+#             return Response(response_data, status=status.HTTP_200_OK)
+
+#         # Serialize and return the records
+#         serializer = TblBillHeaderSerializer(records, many=True)
+#         response_data['message_code'] = 1000
+#         response_data['message_text'] = "Active bills fetched successfully."
+#         response_data['message_data'] = serializer.data
+
+#     except Exception as e:
+#         response_data['message_text'] = str(e)
+#         debug.append(str(e))
+
+#     return Response(response_data, status=status.HTTP_200_OK)
+@api_view(["POST"])
+def get_active_bills(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract parameters from request
+        doctor_id = request.data.get('doctor_id', None)
+        patient_id = request.data.get('patient_id', None)
+        billHeader_id = request.data.get('billHeader_id', None)
+
+        # Validate at least one identifier is provided
+        if not any([doctor_id, patient_id,billHeader_id]):
+            response_data['message_text'] = "At least 'doctor_id','patient_id','billHeader_id' is required."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Base filters for active bills
+        filters = {
+            'is_deleted': 0,
+            'bill_status': 0
+        }
+
+        if doctor_id:
+            filters['doctor_id'] = doctor_id
+        if patient_id:
+            filters['patient_id'] = patient_id
+        if billHeader_id:
+            filters['billHeader_id'] = billHeader_id
+
+        # Fetch matching records with related patient details
+        records = TblBillHeader.objects.filter(**filters).select_related('patient_id').order_by('-created_on')
+
+        # Check if records exist
+        if not records.exists():
+            response_data['message_text'] = "No active bills found for the provided parameters."
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Serialize bill records
+        serializer = TblBillHeaderSerializer(records, many=True)
+        bill_data = serializer.data
+
+        # Manually add patient details to each bill
+        for index, record in enumerate(records):
+            patient = record.patient_id
+            patient_details = {}
+            if patient:
+                # Convert epoch to formatted date and calculate age
+                birth_date = None
+                age = None
+                if patient.patient_dateofbirth:
+                    try:
+                        # Convert epoch to datetime and then format it
+                        birth_date = datetime.fromtimestamp(patient.patient_dateofbirth).strftime("%Y-%m-%d")
+                        
+                        # Calculate age
+                        birth_date_obj = datetime.strptime(birth_date, "%Y-%m-%d").date()
+                        today = datetime.today().date()
+                        age = today.year - birth_date_obj.year - (
+                            (today.month, today.day) < (birth_date_obj.month, birth_date_obj.day)
+                        )
+                    except (ValueError, OverflowError) as e:
+                        debug.append(f"Error converting epoch: {e}")
+                        age = None
+                        birth_date = None
+
+                patient_details = {
+                    "patient_id": patient.patient_id,
+                    "patient_mobileno": patient.patient_mobileno,
+                    "patient_firstname": patient.patient_firstname,
+                    "patient_lastname": patient.patient_lastname,
+                    "patient_gender": patient.patient_gender,
+                    "patient_dateofbirth": birth_date,
+                    "patient_address": patient.patient_address,
+                    "patient_cityid": patient.patient_cityid,
+                    "patient_stateid": patient.patient_stateid,
+                    "patient_countryid": patient.patient_countryid,
+                    "patient_outstanding":patient.outstanding,
+                    "age": age
+                }
+
+            # Add patient details to the serialized bill data
+            bill_data[index]['patient_details'] = patient_details
+
+        response_data['message_code'] = 1000
+        response_data['message_text'] = "Active bills fetched successfully."
+        response_data['message_data'] = bill_data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+#######Update Pateint charges
+@api_view(["POST"])
+def update_patient_charges(request):
+    debug = []
+    response_data = {
+        'message_code': 999,
+        'message_text': 'Error occurred.',
+        'message_data': [],
+        'message_debug': debug
+    }
+
+    try:
+        # Extract identifiers from request
+        doctor_id = request.data.get('doctor_id')
+        patient_id = request.data.get('patient_id')
+
+        # Validate required fields
+        if not doctor_id:
+            response_data['message_text'] = 'Doctor ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        if not patient_id:
+            response_data['message_text'] = 'Patient ID is required.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Fetch the latest patient charge record based on doctor_id and patient_id
+        try:
+            patient_charge = TblpateintCharges.objects.filter(
+                doctor_id=doctor_id,
+                patient_id=patient_id,
+                isdeleted=0
+            ).latest('createdon')  # Fetch the latest record based on 'createdon'
+        except TblpateintCharges.DoesNotExist:
+            response_data['message_text'] = 'No patient charge record found for the given doctor and patient.'
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        # Update fields dynamically from request data
+        updatable_fields = [
+            'patient_status', 'charges_referencetype', 'charges_reference_id', 'charges_type',
+            'charges_category', 'charges_notes', 'charges_units', 'charges_rate',
+            'charges_amount', 'charges_discount', 'charges_discount_reason',
+            'charges_discountby', 'previous_outstanding', 'new_outstanding'
+        ]
+
+        for field in updatable_fields:
+            if field in request.data:
+                setattr(patient_charge, field, request.data.get(field))
+
+        # Update modification details
+        patient_charge.lastmodifiedon = int(datetime.now().timestamp())  # Current timestamp
+        patient_charge.lastmodifiedby = request.data.get('lastmodifiedby', None)
+
+        # Save the updated record
+        patient_charge.save()
+
+        # Serialize and return updated data
+        serializer = PatientChargesSerializer(patient_charge)
+        response_data['message_code'] = 1000
+        response_data['message_text'] = 'Patient charges updated successfully.'
+        response_data['message_data'] = serializer.data
+
+    except Exception as e:
+        response_data['message_text'] = str(e)
+        debug.append(str(e))
+
+    return Response(response_data, status=status.HTTP_200_OK)
