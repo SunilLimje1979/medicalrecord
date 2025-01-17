@@ -446,7 +446,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
                 if 'clinic_mobile_number' in checked_options:
                     table_data.append([Paragraph("Mob. No.:" + str(doctor_mobileno), styles['BodyText'])])
 
-                table_data.append([Paragraph("Regd. No. " + str(doctor_registrationno), styles['BodyText'])])
+                table_data.append([Paragraph("Regd. No. " + str(doctor_registrationno)if doctor_registrationno and doctor_registrationno != '0' else "", styles['BodyText'])])
 
             else:
                table_data=[[Paragraph("")]]
@@ -508,7 +508,7 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
         table_data = [
                     [Paragraph(drinfoblock, styles['BodyText']), Paragraph(services_offered_at, styles['BodyText'])],
                     [Paragraph(""+"", styles['BodyText'])], 
-                    [Paragraph("Regd. No. "+str(doctor_registrationno)+"", styles['BodyText'])],
+                    [Paragraph("Regd. No. "+str(doctor_registrationno) if doctor_registrationno and doctor_registrationno != '0' else "", styles['BodyText'])],
                     [Paragraph("<font size=10 color=black><b>"+"</b></font>", styles['BodyText'])],
                     [Paragraph("Time: "+str(ordertime)+" "+str(daytime)+"", styles['BodyText'])],
                     [Paragraph(" "+str(doctor_address)+" Pin:"+str(doctor_pincode)+"", styles['BodyText'])],
@@ -642,17 +642,17 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     OE =  "<font size=10 color=black><b>O/E :-</b></font>"
     
     if result_patientvitals:
-        patient_heartratepluse = result_patientvitals['patient_heartratepluse']
-        patient_bpsystolic = result_patientvitals['patient_bpsystolic']
-        patient_bpdistolic = result_patientvitals['patient_bpdistolic']
+        patient_heartratepluse = result_patientvitals['patient_heartratepluse'] if result_patientvitals['patient_heartratepluse'] else '-'
+        patient_bpsystolic = result_patientvitals['patient_bpsystolic'] if result_patientvitals['patient_bpsystolic'] else '-'
+        patient_bpdistolic = result_patientvitals['patient_bpdistolic'] if result_patientvitals['patient_bpdistolic'] else '-'
         patient_painscale = result_patientvitals['patient_painscale']
         patient_respiratoryrate = result_patientvitals['patient_respiratoryrate']
-        patient_temparature = result_patientvitals['patient_temparature']
+        patient_temparature = result_patientvitals['patient_temparature'] if result_patientvitals['patient_temparature'] else '-'
         patient_chest = result_patientvitals['patient_chest']
         patient_ecg = result_patientvitals['patient_ecg']
-        patient_height=result_patientvitals['height']
-        patient_weight=result_patientvitals['weight']
-        bp = str(patient_bpsystolic) +"/"+str(patient_bpdistolic)
+        patient_height=result_patientvitals['height'] if result_patientvitals['height'] else '-'
+        patient_weight=result_patientvitals['weight'] if result_patientvitals['weight'] else '-'
+        bp = str(patient_bpsystolic) +"/"+str(patient_bpdistolic) if result_patientvitals['patient_bpsystolic'] else '-'
     else:
         patient_heartratepluse = ""
         patient_bpsystolic = ""
@@ -710,8 +710,8 @@ def generate_pdf(result_doctor,result_patient,result_doctor_location,result_pati
     Advice =  "<font size=10 color=black><b>Advice :-</b></font>"
 
     new_table_data_four = [
-        [Paragraph(Advice, styles['BodyText']), Paragraph("<font size=10 color=black><b>Instruction :-</b></font>"+result_consultation[0]['instructions'], styles['BodyText'])],
-        [Paragraph(result_findings_symptoms[0].get('advice'), styles['BodyText']), Paragraph("", styles['BodyText'])],
+        [Paragraph(Advice, styles['BodyText']), Paragraph("<font size=10 color=black><b>Instruction :-</b></font>"+result_consultation[0]['instructions'] if result_consultation[0]['instructions'] else " ", styles['BodyText'])],
+        [Paragraph(result_findings_symptoms[0].get('advice') if result_findings_symptoms[0].get('advice') else "No Advice", styles['BodyText']), Paragraph("", styles['BodyText'])],
         # [Paragraph("C.T. Scan", styles['BodyText']), Paragraph("Review after 4 Days on Mar 28, 2023" , styles['BodyText'])],
         # [Paragraph("Paracheck for MPÐ", styles['BodyText']), Paragraph("" , styles['BodyText'])],
         # [Paragraph("CBC", styles['BodyText']), Paragraph("" , styles['BodyText'])],

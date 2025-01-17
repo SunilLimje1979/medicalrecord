@@ -809,10 +809,12 @@ def insert_consultation(request):
     visit_reason = request.data.get('Visit_Reason', '')
     consultation_duration = request.data.get('Consultation_Duration', 0)
     further_assisted = request.data.get('Further_Assited', 0)
-    followup_datetime_str = request.data.get('Followup_DateTime', 0)
-    
-    followup_datetime_epoch = datetime.strptime(followup_datetime_str, '%Y-%m-%d %H:%M:%S')
-    followup_datetime = int(followup_datetime_epoch.timestamp())
+    followup_datetime_str = request.data.get('Followup_DateTime', None)
+    if followup_datetime_str:
+        followup_datetime_epoch = datetime.strptime(followup_datetime_str, '%Y-%m-%d %H:%M:%S')
+        followup_datetime = int(followup_datetime_epoch.timestamp())
+    else:
+        followup_datetime = None
     instructions = request.data.get('instructions')
     consultation_fees = request.data.get('consultation_fees')
     referred_to_doctor = request.data.get('referred_to_doctor')
