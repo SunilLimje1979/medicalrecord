@@ -116,6 +116,6 @@ urlpatterns = [
     path('get_active_bills/',get_active_bills,name='get_active_bills'),
     
     path('update_patient_charges/',update_patient_charges,name='update_patient_charges'),
-    
+    path('get_consultations_by_patientid_patient_status/',get_consultations_by_patientid_patient_status,name='get_consultations_by_patientid_patient_status'),
 
 ]

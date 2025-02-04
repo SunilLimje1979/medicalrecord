@@ -4688,3 +4688,63 @@ def update_patient_charges(request):
         debug.append(str(e))
 
     return Response(response_data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+def get_consultations_by_patientid_patient_status(request):
+    # Retrieve the patient ID and doctor ID from the request data
+    patient_id = request.data.get('patient_id', None)
+    patient_status = request.data.get('patient_status', None) # if 1==OPD , 2==Daycare , 3==IPD
+
+    # Check if patient ID and doctor ID are provided
+    if not patient_id:
+        return Response({'message_code': 999, 'message_text': 'Patient ID is required.'}, status=status.HTTP_200_OK)
+    
+
+    try:
+        # Query consultations for the given patient ID and doctor ID
+        if(patient_status):
+            patient_status=int(patient_status)
+            consultations = Tblconsultations.objects.filter(patient_id=patient_id,patient_status=patient_status).order_by('-consultation_id')
+        else:
+            consultations = Tblconsultations.objects.filter(patient_id=patient_id).order_by('-consultation_id')
+
+        if not consultations.exists():
+            # Handle case when no consultations are found for the given patient ID and patient_status
+            if(patient_status):
+                if(patient_status==1):
+                    message_text = 'Consultations not found for the specified patient ID and Patient_status as OPD.'
+                elif(patient_status==2):
+                    message_text = 'Consultations not found for the specified patient ID and Patient_status as Daycare.'
+                else:
+                    message_text = 'Consultations not found for the specified patient ID and Patient_status as IPD.'
+            else:
+                message_text = 'Consultations not found for the specified patient ID.'
+
+            return Response({'message_code': 999, 'message_text':message_text}, status=status.HTTP_200_OK)
+
+        # Serialize consultations data
+        serializer = ConsultationSerializer(consultations, many=True)
+
+        # Prepare response data for successful retrieval
+        if(patient_status):
+            if(patient_status==1):
+                message_text = 'Consultation details fetched successfully for patient under OPD.'
+            elif(patient_status==2):
+                message_text = 'Consultation details fetched successfully for patient under DayCare.'
+            else:
+                message_text = 'Consultation details fetched successfully for patient under IPD.'
+        else:
+            message_text = 'All Consultation details fetched successfully for patient Id.'
+
+        response_data = {
+            'message_code': 1000,
+            'message_text':message_text,
+            'message_data': serializer.data
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        # Handle other exceptions that may occur during query or serialization
+        return Response({'message_code': 999, 'message_text': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
